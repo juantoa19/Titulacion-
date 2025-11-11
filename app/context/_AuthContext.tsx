@@ -13,6 +13,16 @@ interface Ticket {
   id: string;
   ticketId: string;
   userId: string;
+  userInfo?: {
+    nombre1?: string;
+    nombre2?: string;
+    apellido1?: string;
+    apellido2?: string;
+    cedula?: string;
+    telefono?: string;
+    email?: string;
+    direccion?: string;
+  };
   deviceInfo: {
     tipoDispositivo: string;
     marca: string;
@@ -23,6 +33,7 @@ interface Ticket {
   fechaSolicitud: string;
   estado: TicketStatus;
   prioridad?: 'alta' | 'media' | 'baja';
+  tecnicoAsignado?: string;
 }
 
 interface Notification {
@@ -44,6 +55,8 @@ interface AuthContextType {
   notifications: Notification[];
   createTicket: (ticket: Omit<Ticket, 'id' | 'ticketId' | 'fechaSolicitud' | 'estado'>) => Promise<Ticket>;
   updateTicketStatus: (id: string, newStatus: TicketStatus) => void;
+  assignTicket: (id: string, tecnicoNombre: string) => void;
+  updateTicketDetails: (id: string, newStatus?: TicketStatus, newPriority?: 'alta' | 'media' | 'baja') => void;
   addNotification: (n: Omit<Notification, 'id' | 'date' | 'read'>) => Notification;
   markNotificationRead: (id: string) => void;
   markAllNotificationsRead: (userId?: string) => void;
@@ -130,6 +143,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const assignTicket = (id: string, tecnicoNombre: string) => {
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, tecnicoAsignado: tecnicoNombre } : t));
+  };
+
+  const updateTicketDetails = (id: string, newStatus?: TicketStatus, newPriority?: 'alta' | 'media' | 'baja') => {
+    setTickets(prev => prev.map(t => {
+      if (t.id === id) {
+        const updated = { ...t };
+        if (newStatus) updated.estado = newStatus;
+        if (newPriority) updated.prioridad = newPriority;
+        return updated;
+      }
+      return t;
+    }));
+  };
+
   const addNotification = (n: Omit<Notification, 'id' | 'date' | 'read'>) => {
     const id = Math.random().toString(36).slice(2, 9);
     const newN: Notification = { id, ...n, date: new Date().toISOString(), read: false };
@@ -155,6 +184,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       notifications,
       createTicket,
       updateTicketStatus,
+      assignTicket,
+      updateTicketDetails,
       addNotification,
       markNotificationRead,
       markAllNotificationsRead,
