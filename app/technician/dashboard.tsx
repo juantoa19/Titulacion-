@@ -133,7 +133,7 @@ export default function TechnicianDashboard() {
           deviceInfo: {
             tipoDispositivo: 'Celular',
             marca: 'Samsung',
-            modelo: 'Galaxy S21',
+            modelo: 'Galaxy S22',
             numeroSerie: 'SN555666777'
           },
           problema: 'La pantalla tiene líneas de colores y no responde al tacto',
