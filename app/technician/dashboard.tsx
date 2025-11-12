@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  StyleSheet, 
-  ScrollView,
-  Alert,
-  RefreshControl,
-  Animated
-} from 'react-native';
-import { FontAwesome5, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../context/_AuthContext';
 import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  Animated,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { useAuth } from '../context/_AuthContext';
 
 type TicketStatus = 'pendiente' | 'en_revision' | 'reparado' | 'cerrado';
 type Priority = 'alta' | 'media' | 'baja';
@@ -420,7 +418,7 @@ export default function TechnicianDashboard() {
           onPress={() => router.push('/technician/tickets-disponibles' as any)}
         >
           <View style={[styles.cardIcon, styles.iconPrimary]}>
-            <Text style={styles.iconText}>🔎</Text>
+            <Text style={styles.iconText}>🎫</Text>
           </View>
           <Text style={styles.cardTitle}>Tickets Disponibles</Text>
           <Text style={styles.cardSubtitle}>Ver tickets sin técnico asignado</Text>
@@ -428,13 +426,13 @@ export default function TechnicianDashboard() {
 
         <TouchableOpacity
           style={[styles.card, styles.cardSecondary]}
-          onPress={() => router.push('/technician/tickets-no-disponibles' as any)}
+          onPress={() => router.push('/technician/tickets-asignados' as any)}
         >
           <View style={[styles.cardIcon, styles.iconSecondary]}>
-            <Text style={styles.iconText}>🔒</Text>
+            <Text style={styles.iconText}>📝</Text>
           </View>
-          <Text style={styles.cardTitle}>Tickets No Disponibles</Text>
-          <Text style={styles.cardSubtitle}>Ver tickets ya asignados</Text>
+          <Text style={styles.cardTitle}>Mis tickets</Text>
+          <Text style={styles.cardSubtitle}>Ver tickets en los que estoy trabajando</Text>
         </TouchableOpacity>
       </View>
 
