@@ -13,7 +13,8 @@ import {
   TouchableWithoutFeedback,
   Keyboard
 } from 'react-native';
-import { useAuth } from '../context/_AuthContext';
+// 1. Importa el tipo LoginData
+import { useAuth, LoginData } from '../context/_AuthContext';
 import { router } from 'expo-router';
 
 export default function LoginScreen() {
@@ -58,19 +59,32 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await login(email, password);
+      // 2. CREA EL OBJETO 'LoginData'
+      const loginData: LoginData = {
+        email: email,
+        password: password
+      };
+
+      // 3. PASA EL OBJETO (1 ARGUMENTO)
+      const user = await login(loginData);
       
-      const userRole = email.includes('admin') ? 'admin' : 
-                      email.includes('tech') ? 'technician' : 'user';
+      // 4. Usa el ROL REAL que devuelve la API
+      const userRole = user.role;
       
       const path =
-        userRole === 'admin' ? '/admin' :
+        userRole === 'admin' ? '/admin/index' : // Asegúrate que la ruta sea completa
         userRole === 'technician' ? '/technician/dashboard' :
         '/user/dashboard';
 
       router.replace(path as any);
-    } catch (error) {
-      Alert.alert('Error', 'Credenciales incorrectas');
+    } catch (error: any) {
+      // Manejo de errores mejorado
+      if (error.response && error.response.status === 401) {
+        Alert.alert('Error', 'Credenciales inválidas');
+      } else {
+        console.error(error); // Muestra el error completo en la consola
+        Alert.alert('Error de Red', 'No se pudo conectar al servidor. Revisa tu IP y que el backend esté corriendo.');
+      }
     } finally {
       setLoading(false);
     }
@@ -181,9 +195,7 @@ export default function LoginScreen() {
             {/* Texto de demo */}
             <View style={styles.demoContainer}>
               <Text style={styles.demoTitle}>Credenciales de prueba:</Text>
-              <Text style={styles.demoText}>• admin@test.com</Text>
-              <Text style={styles.demoText}>• tech@test.com</Text>
-              <Text style={styles.demoText}>• user@test.com</Text>
+              <Text style={styles.demoText}>• admin@proyecto.com (pass: password123)</Text>
             </View>
 
             {/* Link de registro */}

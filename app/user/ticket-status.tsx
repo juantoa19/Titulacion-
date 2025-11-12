@@ -1,50 +1,101 @@
-import React from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { useAuth } from '../context/_AuthContext';
+import React, { useCallback } from 'react';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { useAuth, Ticket } from '../context/_AuthContext'; // 1. Importar el tipo Ticket
+import { useFocusEffect } from 'expo-router';
 
 export default function TicketStatus() {
-  const { user, tickets } = useAuth();
+  // 2. Obtener el estado real del contexto
+  const { tickets, isLoading, fetchUserTickets } = useAuth();
+  const [refreshing, setRefreshing] = React.useState(false);
 
-  const myTickets = tickets.filter(t => t.userId === (user?.id || ''));
+  // 3. Usar useFocusEffect para cargar datos cuando la pantalla se enfoca
+  useFocusEffect(
+    useCallback(() => {
+      // No necesitamos 'isLoading' aquí, fetchUserTickets maneja su propio estado
+      // si quisiéramos mostrar un spinner en la pantalla completa.
+      // Pero para la lista, 'tickets' es suficiente.
+      
+      // Ya que isLoading es para la app, usamos un 'refresh' local
+      onRefresh(); 
+    }, [])
+  );
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchUserTickets();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchUserTickets]);
+
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'completado':
-      case 'resuelto':
+      case 'reparado':
         return '#10b981';
-      case 'en progreso':
-      case 'en proceso':
+      case 'en_revision': // API usa 'en_revision'
         return '#f59e0b';
       case 'pendiente':
         return '#6b7280';
-      case 'cancelado':
+      case 'cerrado':
         return '#ef4444';
       default:
         return '#6b7280';
     }
   };
 
+  // 4. Componente para un solo ticket
+  const renderTicketItem = ({ item }: { item: Ticket }) => (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        {/* Usamos el ID real del ticket */}
+        <Text style={styles.ticketId}>Ticket #{item.id}</Text>
+        <View style={[
+          styles.statusBadge, 
+          { backgroundColor: getStatusColor(item.estado_usuario) } // Usar estado_usuario
+        ]}>
+          {/* Formatear el texto (reemplazar guión bajo) */}
+          <Text style={styles.statusText}>
+            {item.estado_usuario.replace('_', ' ')}
+          </Text>
+        </View>
+      </View>
+      {/* Usar los campos correctos de la API */}
+      <Text style={styles.info}>
+        {item.tipo_dispositivo} - {item.marca} {item.modelo}
+      </Text>
+      <Text style={styles.date}>
+        Solicitado: {new Date(item.created_at).toLocaleString('es-ES')}
+      </Text>
+    </View>
+  );
+
+  // 5. Mostrar indicador de carga si isLoading es true
+  if (isLoading && tickets.length === 0) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+        <Text style={styles.empty}>Cargando tus tickets...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Mis Tickets</Text>
-      {myTickets.length === 0 ? (
-        <Text style={styles.empty}>No tienes tickets aún.</Text>
+      {tickets.length === 0 ? (
+        <Text style={styles.empty}>No has generado ningún ticket aún.</Text>
       ) : (
         <FlatList
-          data={myTickets}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.ticketId}>#{item.ticketId}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.estado) }]}>
-                  <Text style={styles.statusText}>{item.estado}</Text>
-                </View>
-              </View>
-              <Text style={styles.info}>{item.deviceInfo.tipoDispositivo} - {item.deviceInfo.marca} {item.deviceInfo.modelo}</Text>
-              <Text style={styles.date}>{new Date(item.fechaSolicitud).toLocaleString()}</Text>
-            </View>
-          )}
+          data={tickets}
+          keyExtractor={item => item.id.toString()} // key debe ser string
+          renderItem={renderTicketItem}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       )}
     </View>
@@ -56,6 +107,10 @@ const styles = StyleSheet.create({
     flex: 1, 
     padding: 20, 
     backgroundColor: '#f8fafc' 
+  },
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: { 
     fontSize: 24, 
@@ -95,14 +150,15 @@ const styles = StyleSheet.create({
     fontSize: 16
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8
+    paddingHorizontal: 10, // Más padding
+    paddingVertical: 5,  // Más padding
+    borderRadius: 12, // Más redondeado
   },
   statusText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '600'
+    fontWeight: '600',
+    textTransform: 'capitalize', // Poner en mayúscula la primera
   },
   info: { 
     color: '#334155', 

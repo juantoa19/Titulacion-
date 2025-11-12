@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
-import { useAuth } from '../context/_AuthContext';
+import { useAuth, TicketFormData } from '../context/_AuthContext'; // 1. Importar el tipo
 import { router } from 'expo-router';
 
 export default function CreateTicket() {
-  const { user, createTicket } = useAuth();
+  const { createTicket } = useAuth(); // 2. Obtener la función real
   const [tipo, setTipo] = useState('');
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
@@ -13,21 +13,39 @@ export default function CreateTicket() {
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async () => {
-    if (!tipo || !marca || !modelo) {
-      Alert.alert('Error', 'Por favor completa los campos obligatorios.');
+    if (!tipo || !marca || !modelo || !descripcion) { // 3. Descripción es obligatoria
+      Alert.alert('Error', 'Por favor completa todos los campos obligatorios.');
       return;
     }
     setLoading(true);
+    
+    // 4. Construir el objeto EXACTO que la API espera
+    const formData: TicketFormData = {
+      tipo_dispositivo: tipo,
+      marca: marca,
+      modelo: modelo,
+      numero_serie: numeroSerie || null,
+      descripcion_problema: descripcion
+    };
+
     try {
-      await createTicket({
-        userId: user?.id || 'anonymous',
-        deviceInfo: { tipoDispositivo: tipo, marca, modelo, numeroSerie },
-        problema: descripcion,
-      });
+      // 5. Llamar a la función del contexto
+      await createTicket(formData);
+      
+      Alert.alert('Éxito', 'Tu ticket ha sido creado.');
       // Al crear, navegar a la lista de estado
-      router.push('/user/ticket-status' as any);
-    } catch (e) {
-      Alert.alert('Error', 'No se pudo crear el ticket');
+      router.replace('/user/ticket-status'); // Usar replace para no poder volver
+
+    } catch (error: any) {
+      // 6. Manejar errores de validación del backend
+      if (error.response && error.response.data && error.response.data.errors) {
+        const errors = error.response.data.errors;
+        // Tomar el primer error y mostrarlo
+        const firstErrorMessage = Object.values(errors)[0] as string[];
+        Alert.alert('Error de Validación', firstErrorMessage[0]);
+      } else {
+        Alert.alert('Error', 'No se pudo crear el ticket. Intenta de nuevo.');
+      }
     } finally {
       setLoading(false);
     }
@@ -52,7 +70,7 @@ export default function CreateTicket() {
             style={styles.input} 
             value={tipo} 
             onChangeText={setTipo} 
-            placeholder="Ej. Celular, Laptop, Tablet" 
+            placeholder="Ej. Celular, Laptop, Impresora" 
             placeholderTextColor="#94a3b8"
           />
         </View>
@@ -66,7 +84,7 @@ export default function CreateTicket() {
               style={styles.input} 
               value={marca} 
               onChangeText={setMarca} 
-              placeholder="Ej. Samsung" 
+              placeholder="Ej. Samsung, HP, Dell" 
               placeholderTextColor="#94a3b8"
             />
           </View>
@@ -79,30 +97,32 @@ export default function CreateTicket() {
               style={styles.input} 
               value={modelo} 
               onChangeText={setModelo} 
-              placeholder="Ej. Galaxy S21" 
+              placeholder="Ej. Galaxy S21, Pavilion" 
               placeholderTextColor="#94a3b8"
             />
           </View>
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Número de serie</Text>
+          <Text style={styles.label}>Número de serie (Opcional)</Text>
           <TextInput 
             style={styles.input} 
             value={numeroSerie} 
             onChangeText={setNumeroSerie} 
-            placeholder="Opcional - Ej: SN123456789" 
+            placeholder="Ej: SN123456789" 
             placeholderTextColor="#94a3b8"
           />
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Descripción del problema</Text>
+          <Text style={styles.label}>
+            Descripción del problema <Text style={styles.required}>*</Text>
+          </Text>
           <TextInput
             style={[styles.input, styles.textarea]}
             value={descripcion}
             onChangeText={setDescripcion}
-            placeholder="Describe detalladamente el problema que presenta el dispositivo..."
+            placeholder="Describe detalladamente el problema..."
             placeholderTextColor="#94a3b8"
             multiline
             numberOfLines={5}
@@ -121,9 +141,15 @@ export default function CreateTicket() {
           </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, styles.primary, styles.noShadow, loading && styles.disabled]}
+              style={[
+                styles.button, 
+                styles.primary, 
+                styles.noShadow, 
+                loading && styles.disabled,
+                (!tipo || !marca || !modelo || !descripcion) && styles.disabled // 7. Deshabilitar si falta algo
+              ]}
               onPress={onSubmit}
-              disabled={loading}
+              disabled={loading || !tipo || !marca || !modelo || !descripcion}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" size="small" />
@@ -146,6 +172,7 @@ export default function CreateTicket() {
   );
 }
 
+// ... (tus estilos de 'create-ticket' permanecen idénticos)
 const styles = StyleSheet.create({
   container: { 
     backgroundColor: '#f8fafc', 
@@ -153,7 +180,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   header: {
-    backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Simulación de gradiente
     padding: 30,
     alignItems: 'center',
     borderBottomLeftRadius: 25,

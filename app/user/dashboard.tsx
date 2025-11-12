@@ -1,14 +1,19 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+// 1. Importar ScrollView
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'; 
 import { useAuth } from '../context/_AuthContext';
 import { router } from 'expo-router';
+// 2. Importar Ionicons
+import { Ionicons } from '@expo/vector-icons'; 
 
 export default function UserDashboard() {
-  const { user, notifications } = useAuth();
+  // 3. Obtener la función 'logout' del contexto
+  const { user, notifications, logout } = useAuth();
   const unreadCount = notifications.filter(n => n.userId === (user?.id || '') && !n.read).length;
 
+  // 4. Usar ScrollView para que el botón de logout no se corte en pantallas pequeñas
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <View style={styles.header}>
         {/* Elementos decorativos de fondo */}
         <View style={styles.decorativeCircle1}></View>
@@ -37,7 +42,8 @@ export default function UserDashboard() {
         {user?.email ? <Text style={styles.welcomeEmail}>{user.email}</Text> : null}
         
         <View style={styles.roleBadge}>
-          <Text style={styles.welcomeRole}>{user?.role}</Text>
+          {/* Asegurarse de que el rol se muestre correctamente */}
+          <Text style={styles.welcomeRole}>{user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Usuario'}</Text>
         </View>
 
         {/* Elemento decorativo inferior */}
@@ -73,15 +79,30 @@ export default function UserDashboard() {
           </View>
         </TouchableOpacity>
       </View>
-    </View>
+
+      {/* 5. NUEVO BOTÓN DE LOGOUT */}
+      <TouchableOpacity 
+        style={styles.logoutButton} 
+        onPress={logout} // Llama a la función logout del context
+      >
+        <Ionicons name="log-out-outline" size={20} color="#fff" />
+        <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
+      </TouchableOpacity>
+      
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  // 7. Estilo de container actualizado
   container: { 
     flex: 1, 
     backgroundColor: '#f8fafc', 
-    padding: 20 
+  },
+  // 6. Nuevo estilo para el contenido del ScrollView
+  scrollContent: {
+    padding: 20,
+    flexGrow: 1, // Asegura que el contenido se expanda
   },
   header: {
     backgroundColor: '#ffffff',
@@ -325,4 +346,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
+  // 6. NUEVOS ESTILOS PARA EL BOTÓN DE LOGOUT
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ef4444', // Un color rojo para "salir"
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    marginTop: 'auto', // Esto empuja el botón al final
+    marginBottom: 20,
+    gap: 10,
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  }
 });

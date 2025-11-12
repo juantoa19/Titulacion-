@@ -14,14 +14,15 @@ import {
   Keyboard,
   ScrollView
 } from 'react-native';
-import { useAuth } from '../context/_AuthContext';
+// 1. Importar el tipo RegisterData
+import { useAuth, RegisterData } from '../context/_AuthContext'; 
 import { router } from 'expo-router';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
+  // 2. CAMBIADO: 'name' a 'nombre1' para que coincida con el formulario
   const [nombre1, setNombre1] = useState('');
   const [nombre2, setNombre2] = useState('');
   const [apellido1, setApellido1] = useState('');
@@ -29,10 +30,10 @@ export default function RegisterScreen() {
   const [cedula, setCedula] = useState('');
   const [telefono, setTelefono] = useState('');
   const [direccion, setDireccion] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'user' | 'technician' | 'admin'>('user');
+  // 3. ELIMINADO: 'selectedRole'
   const [loading, setLoading] = useState(false);
   const [isFocused, setIsFocused] = useState({
-    name: false,
+    // 4. CAMBIADO: 'name' a 'nombre1'
     nombre1: false,
     nombre2: false,
     apellido1: false,
@@ -47,12 +48,11 @@ export default function RegisterScreen() {
   
   const { register } = useAuth();
 
-  // Animaciones
+  // Animaciones (sin cambios)
   const titleAnim = React.useRef(new Animated.Value(0)).current;
   const formAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
-    // Animación de entrada
     Animated.parallel([
       Animated.spring(titleAnim, {
         toValue: 1,
@@ -71,8 +71,9 @@ export default function RegisterScreen() {
   }, []);
 
   const handleRegister = async () => {
-    if (!email || !password || !confirmPassword || !name || !nombre1 || !apellido1 || !cedula || !telefono) {
-      Alert.alert('Error', 'Por favor completa todos los campos obligatorios');
+    // 5. CORREGIDO: Comprobar campos obligatorios correctos
+    if (!email || !password || !confirmPassword || !nombre1 || !apellido1 || !cedula || !telefono) {
+      Alert.alert('Error', 'Por favor completa todos los campos obligatorios (*)');
       return;
     }
 
@@ -81,18 +82,33 @@ export default function RegisterScreen() {
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres');
+    // 6. CORREGIDO: Mínimo 8 caracteres para coincidir con Laravel
+    if (password.length < 8) { 
+      Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres');
       return;
     }
 
     setLoading(true);
+    
+    // 7. CORREGIDO: Construir el objeto formData completo
+    const formData: RegisterData = {
+      name: nombre1,
+      nombre2: nombre2 || null,
+      apellido1: apellido1,
+      apellido2: apellido2 || null,
+      cedula: cedula,
+      telefono: telefono,
+      direccion: direccion || null,
+      email: email,
+      password: password,
+      password_confirmation: confirmPassword
+    };
+
     try {
-      // si register solo espera (email, password, name)
-      await register(email, password, name);
+      await register(formData); // Enviar el objeto completo
       Alert.alert(
         '¡Cuenta creada!', 
-        'Tu cuenta ha sido creada exitosamente',
+        'Tu cuenta ha sido creada exitosamente. Serás redirigido al Login.',
         [
           {
             text: 'OK',
@@ -101,7 +117,23 @@ export default function RegisterScreen() {
         ]
       );
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Error al crear la cuenta');
+      // 8. CORREGIDO: Manejo de error de validación (firstError: unknown)
+      if (error.response && error.response.data && error.response.data.errors) {
+        // 'errors' es { email: ["El email..."], password: [...] }
+        const errors: Record<string, string[]> = error.response.data.errors;
+        const errorMessages = Object.values(errors);
+        
+        if (errorMessages.length > 0) {
+          const firstErrorMessages = errorMessages[0];
+          if (firstErrorMessages.length > 0) {
+            Alert.alert('Error de Validación', firstErrorMessages[0]);
+          }
+        } else {
+          Alert.alert('Error', 'Ocurrió un error de validación.');
+        }
+      } else {
+        Alert.alert('Error', error.message || 'Error al crear la cuenta');
+      }
     } finally {
       setLoading(false);
     }
@@ -125,7 +157,8 @@ export default function RegisterScreen() {
     outputRange: [50, 0]
   });
 
-  const isFormValid = email && password && confirmPassword && name && nombre1 && apellido1 && cedula && telefono && password === confirmPassword && password.length >= 6;
+  // 9. CORREGIDO: 'isFormValid' usa los campos correctos
+  const isFormValid = email && password && confirmPassword && nombre1 && apellido1 && cedula && telefono && password === confirmPassword && password.length >= 8;
 
   return (
     <KeyboardAvoidingView 
@@ -139,7 +172,7 @@ export default function RegisterScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.inner}>
-            {/* Header con gradiente */}
+            {/* Header */}
             <View style={styles.header}>
               <Animated.Text 
                 style={[
@@ -182,7 +215,7 @@ export default function RegisterScreen() {
                     ]}
                     placeholder="Primer nombre"
                     value={nombre1}
-                    onChangeText={setNombre1}
+                    onChangeText={setNombre1} // 10. CORREGIDO
                     onFocus={() => handleFocus('nombre1')}
                     onBlur={() => handleBlur('nombre1')}
                   />
@@ -276,7 +309,7 @@ export default function RegisterScreen() {
 
               {/* Dirección */}
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Dirección</Text>
+                <Text style={styles.inputLabel}>Dirección (Opcional)</Text>
                 <TextInput 
                   style={[
                     styles.input,
@@ -291,9 +324,14 @@ export default function RegisterScreen() {
                 />
               </View>
 
+              {/* Separador */}
+              <View style={styles.sectionTitle}>
+                <Text style={styles.sectionLabel}>Información de Cuenta</Text>
+              </View>
+
               {/* Input de Email */}
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Correo electrónico</Text>
+                <Text style={styles.inputLabel}>Correo electrónico *</Text>
                 <TextInput 
                   style={[
                     styles.input,
@@ -312,29 +350,29 @@ export default function RegisterScreen() {
 
               {/* Input de Contraseña */}
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Contraseña</Text>
+                <Text style={styles.inputLabel}>Contraseña *</Text>
                 <TextInput 
                   style={[
                     styles.input,
                     isFocused.password && styles.inputFocused,
-                    password && password.length >= 6 && styles.inputValid,
-                    password && password.length < 6 && styles.inputError
+                    password && password.length >= 8 && styles.inputValid,
+                    password && password.length < 8 && styles.inputError
                   ]}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
                   onFocus={() => handleFocus('password')}
                   onBlur={() => handleBlur('password')}
                 />
-                {password && password.length < 6 && (
-                  <Text style={styles.errorText}>Mínimo 6 caracteres</Text>
+                {password && password.length < 8 && (
+                  <Text style={styles.errorText}>Mínimo 8 caracteres</Text>
                 )}
               </View>
 
               {/* Input de Confirmar Contraseña */}
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Confirmar Contraseña</Text>
+                <Text style={styles.inputLabel}>Confirmar Contraseña *</Text>
                 <TextInput 
                   style={[
                     styles.input,
@@ -359,9 +397,9 @@ export default function RegisterScreen() {
                 <Text style={styles.requirementsTitle}>La contraseña debe:</Text>
                 <Text style={[
                   styles.requirementText,
-                  password.length >= 6 ? styles.requirementMet : styles.requirementUnmet
+                  password.length >= 8 ? styles.requirementMet : styles.requirementUnmet
                 ]}>
-                  ✓ Tener al menos 6 caracteres
+                  ✓ Tener al menos 8 caracteres
                 </Text>
                 <Text style={[
                   styles.requirementText,
@@ -371,32 +409,7 @@ export default function RegisterScreen() {
                 </Text>
               </View>
 
-              {/* Selector de Rol */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.roleLabel}>Selecciona tu rol:</Text>
-                <View style={styles.roleContainer}>
-                  <TouchableOpacity 
-                    style={[styles.roleButton, selectedRole === 'user' && styles.roleButtonSelected]} 
-                    onPress={() => setSelectedRole('user')}
-                  >
-                    <Text style={[styles.roleButtonText, selectedRole === 'user' && styles.roleButtonTextSelected]}>Usuario</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.roleButton, selectedRole === 'technician' && styles.roleButtonSelected]} 
-                    onPress={() => setSelectedRole('technician')}
-                  >
-                    <Text style={[styles.roleButtonText, selectedRole === 'technician' && styles.roleButtonTextSelected]}>Técnico</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.roleButton, selectedRole === 'admin' && styles.roleButtonSelected]} 
-                    onPress={() => setSelectedRole('admin')}
-                  >
-                    <Text style={[styles.roleButtonText, selectedRole === 'admin' && styles.roleButtonTextSelected]}>Administrador</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+              {/* 11. ELIMINADO: Selector de Rol */}
 
               {/* Botón de Registro */}
               <TouchableOpacity 
@@ -429,44 +442,11 @@ export default function RegisterScreen() {
   );
 }
 
+// 12. CORREGIDO: Eliminados los estilos del selector de rol
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    gap: 8,
-  },
-  roleButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#ffffff',
-    alignItems: 'center',
-  },
-  roleButtonSelected: {
-    backgroundColor: '#10b981',
-    borderColor: '#10b981',
-  },
-  roleButtonText: {
-    fontSize: 12,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  roleButtonTextSelected: {
-    color: '#ffffff',
-    fontWeight: '600',
-  },
-  roleLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
   },
   rowContainer: {
     flexDirection: 'row',
@@ -544,7 +524,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#ffffff',
     fontSize: 16,
-    color: '#1e293b',
+    color: '#0f172a',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
