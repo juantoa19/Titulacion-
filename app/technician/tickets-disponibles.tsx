@@ -1,9 +1,22 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert } from 'react-native';
-import { router } from 'expo-router';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Modal,
+  Alert,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../context/_AuthContext';
+import { apiFetch } from '../services/api'; // <--- Importar API
 
 type TicketStatus = 'pendiente' | 'en_revision' | 'reparado' | 'cerrado';
+type Priority = 'alta' | 'media' | 'baja';
 
 interface Ticket {
   id: string;
@@ -28,92 +41,103 @@ interface Ticket {
   problema: string;
   fechaSolicitud: string;
   estado: TicketStatus;
-  prioridad?: 'alta' | 'media' | 'baja';
+  prioridad?: Priority;
   tecnicoAsignado?: string;
 }
 
-const mockTickets: Ticket[] = [
-  {
-    id: '1',
-    ticketId: 'TKT-123456',
-    userId: 'user1',
+/**
+ * Mapea los datos de la API (snake_case) al formato del Frontend (camelCase)
+ */
+const mapApiToTicket = (apiTicket: any): Ticket => {
+  const usuario = apiTicket.usuario || {}; // Objeto de usuario (cliente)
+  
+  // Dividir el nombre del usuario
+  const nombreCompleto = (usuario.name || 'Usuario Desconocido').split(' ');
+  const nombre1 = nombreCompleto[0] || '';
+  const apellido1 = nombreCompleto.length > 1 ? nombreCompleto[1] : '';
+
+  return {
+    id: apiTicket.id.toString(),
+    ticketId: `TKT-${apiTicket.id}`,
+    userId: apiTicket.user_id.toString(),
     userInfo: {
-      nombre1: 'Juan',
-      nombre2: 'Carlos',
-      apellido1: 'Pérez',
-      apellido2: 'Gómez',
-      cedula: '12345678',
-      telefono: '3001234567',
-      email: 'juan@example.com',
-      direccion: 'Calle 123 #45-67'
+      nombre1: nombre1,
+      apellido1: apellido1,
+      cedula: usuario.cedula || 'N/A', // Asume que el modelo User tiene 'cedula', 'telefono', etc.
+      telefono: usuario.telefono || 'N/A',
+      email: usuario.email || 'N/A',
+      direccion: usuario.direccion || 'N/A',
     },
     deviceInfo: {
-      tipoDispositivo: 'Laptop',
-      marca: 'Dell',
-      modelo: 'XPS 13',
-      numeroSerie: 'SN123456789'
+      tipoDispositivo: apiTicket.tipo_dispositivo,
+      marca: apiTicket.marca,
+      modelo: apiTicket.modelo,
+      numeroSerie: apiTicket.numero_serie,
     },
-    problema: 'La laptop no enciende y hace un sonido de beep constante',
-    fechaSolicitud: '2024-01-15T10:30:00Z',
-    estado: 'pendiente',
-    prioridad: 'alta',
-  },
-  {
-    id: '2',
-    ticketId: 'TKT-789012',
-    userId: 'user2',
-    userInfo: {
-      nombre1: 'María',
-      nombre2: 'Fernanda',
-      apellido1: 'Rodríguez',
-      apellido2: 'López',
-      cedula: '87654321',
-      telefono: '3109876543',
-      email: 'maria@example.com',
-      direccion: 'Av. Principal #89-10'
-    },
-    deviceInfo: {
-      tipoDispositivo: 'Impresora',
-      marca: 'HP',
-      modelo: 'LaserJet Pro',
-      numeroSerie: 'SN987654321'
-    },
-    problema: 'La impresora no imprime correctamente, mancha el papel',
-    fechaSolicitud: '2024-01-14T14:20:00Z',
-    estado: 'en_revision',
-    prioridad: 'media',
-  },
-  {
-    id: '3',
-    ticketId: 'TKT-345678',
-    userId: 'user3',
-    userInfo: {
-      nombre1: 'Carlos',
-      nombre2: 'Andrés',
-      apellido1: 'González',
-      apellido2: '',
-      cedula: '11223344',
-      telefono: '3205556677',
-      email: 'carlos@example.com',
-      direccion: 'Carrera 56 #78-90'
-    },
-    deviceInfo: {
-      tipoDispositivo: 'Celular',
-      marca: 'Samsung',
-      modelo: 'Galaxy S21',
-      numeroSerie: 'SN555666777'
-    },
-    problema: 'La pantalla tiene líneas de colores y no responde al tacto',
-    fechaSolicitud: '2024-01-13T09:15:00Z',
-    estado: 'reparado',
-    prioridad: 'alta',
-  }
-];
+    problema: apiTicket.descripcion_problema,
+    fechaSolicitud: apiTicket.created_at, // Usamos created_at para la fecha de solicitud
+    estado: apiTicket.estado_usuario,
+    prioridad: apiTicket.prioridad,
+    tecnicoAsignado: apiTicket.tecnico ? apiTicket.tecnico.name : undefined,
+  };
+};
 
 export default function TicketsDisponibles() {
-  const { user, assignTicket } = useAuth();
+  const { user } = useAuth();
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
-  const available = mockTickets.filter(t => !t.tecnicoAsignado);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // useFocusEffect se ejecuta cada vez que la pantalla entra en foco
+  useFocusEffect(
+    useCallback(() => {
+      fetchTickets();
+    }, [])
+  );
+
+  const fetchTickets = async () => {
+    try {
+      setLoading(true);
+      const data = await apiFetch('/tickets'); // Endpoint que trae todos los tickets
+      
+      const mappedTickets: Ticket[] = data
+        .filter((t: any) => t.tecnico_id === null) // Filtramos los no asignados
+        .map(mapApiToTicket); // Mapeamos al formato local
+
+      setTickets(mappedTickets);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'No se pudieron cargar los tickets disponibles');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+  
+  const onRefresh = () => {
+      setRefreshing(true);
+      fetchTickets();
+  };
+
+  const handleTakeTicket = async () => {
+    if (selectedTicket && user?.name) {
+      try {
+        // Llamada al endpoint personalizado 'assign'
+        await apiFetch(`/tickets/${selectedTicket.id}/assign`, 'POST');
+        
+        Alert.alert('Éxito', `Ticket ${selectedTicket.ticketId} asignado a ${user.name}`);
+        setSelectedTicket(null);
+        // Navegar a "Mis Tickets" después de tomarlo
+        router.push('/technician/tickets-asignados' as any);
+
+      } catch (error: any) {
+         Alert.alert('Error', error.response?.data?.message || 'No se pudo asignar el ticket');
+      }
+    }
+  };
+
+  // --- Funciones de UI (Helpers) ---
 
   const getStatusColor = (status: TicketStatus) => {
     switch (status) {
@@ -125,20 +149,22 @@ export default function TicketsDisponibles() {
     }
   };
 
+  const getPriorityColor = (priority?: Priority) => {
+     switch (priority) {
+      case 'alta': return '#ef4444';
+      case 'media': return '#f59e0b';
+      case 'baja': return '#10b981';
+      default: return '#6b7280';
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
       year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
   };
 
-  const handleTakeTicket = () => {
-    if (selectedTicket && user?.name) {
-      assignTicket(selectedTicket.id, user.name);
-      setSelectedTicket(null);
-      Alert.alert('Éxito', `Ticket ${selectedTicket.ticketId} asignado a ${user.name}`);
-      router.push('/technician/tickets-asignados' as any);
-    }
-  };
+  // --- Componentes de UI (Render) ---
 
   const TicketCard = ({ ticket }: { ticket: Ticket }) => (
     <TouchableOpacity style={styles.card} onPress={() => setSelectedTicket(ticket)}>
@@ -156,7 +182,7 @@ export default function TicketsDisponibles() {
 
       <View style={styles.cardFooter}>
         <Text style={styles.dateText}>{formatDate(ticket.fechaSolicitud)}</Text>
-        {ticket.prioridad ? <Text style={[styles.priorityText, { color: ticket.prioridad === 'alta' ? '#ef4444' : ticket.prioridad === 'media' ? '#f59e0b' : '#10b981' }]}>{ticket.prioridad.toUpperCase()}</Text> : null}
+        {ticket.prioridad ? <Text style={[styles.priorityText, { color: getPriorityColor(ticket.prioridad) }]}>{ticket.prioridad.toUpperCase()}</Text> : null}
       </View>
     </TouchableOpacity>
   );
@@ -179,7 +205,7 @@ export default function TicketsDisponibles() {
             {ticket.prioridad && (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Prioridad:</Text>
-                <Text style={[styles.priorityText, { marginLeft: 8, color: ticket.prioridad === 'alta' ? '#ef4444' : ticket.prioridad === 'media' ? '#f59e0b' : '#10b981' }]}>
+                <Text style={[styles.priorityText, { marginLeft: 8, color: getPriorityColor(ticket.prioridad) }]}>
                   {ticket.prioridad.toUpperCase()}
                 </Text>
               </View>
@@ -189,7 +215,7 @@ export default function TicketsDisponibles() {
             <Text style={styles.sectionTitle}>Información del Usuario</Text>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Nombre:</Text>
-              <Text style={styles.detailValue}>{ticket.userInfo.nombre1} {ticket.userInfo.nombre2} {ticket.userInfo.apellido1} {ticket.userInfo.apellido2}</Text>
+              <Text style={styles.detailValue}>{ticket.userInfo.nombre1} {ticket.userInfo.apellido1}</Text>
             </View>
             {ticket.userInfo.cedula && (
               <View style={styles.detailRow}>
@@ -240,7 +266,7 @@ export default function TicketsDisponibles() {
             {/* Problema */}
             <Text style={styles.sectionTitle}>Descripción del Problema</Text>
             <View style={styles.problemBox}>
-              <Text style={styles.problemText}>{ticket.problema}</Text>
+              <Text style={styles.problemDetailText}>{ticket.problema}</Text>
             </View>
 
             <View style={styles.dateRow}>
@@ -264,12 +290,24 @@ export default function TicketsDisponibles() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tickets Disponibles</Text>
-      <FlatList
-        data={available}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => <TicketCard ticket={item} />}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      />
+      {loading ? (
+         <ActivityIndicator size="large" color="#0b3d91" style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={tickets}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => <TicketCard ticket={item} />}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No hay tickets disponibles por el momento.</Text>
+            </View>
+          }
+          refreshControl={
+             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      )}
       {selectedTicket && <TicketDetailModal ticket={selectedTicket} />}
     </View>
   );
@@ -278,6 +316,14 @@ export default function TicketsDisponibles() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#f8fafc' },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 12, color: '#0f172a' },
+  emptyContainer: {
+    marginTop: 60,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#64748b',
+  },
   card: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 12, shadowColor: 'rgba(15,23,42,0.06)', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 3 },
   ticketHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   ticketId: { fontWeight: '700', color: '#0f172a', fontSize: 16 },
@@ -296,10 +342,11 @@ const styles = StyleSheet.create({
   modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, maxHeight: '85%' },
   modalTitle: { fontSize: 24, fontWeight: '800', color: '#0f172a', marginBottom: 16 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#0f172a', marginTop: 16, marginBottom: 10 },
-  detailRow: { flexDirection: 'row', marginBottom: 10 },
+  detailRow: { flexDirection: 'row', marginBottom: 10, alignItems: 'center' },
   detailLabel: { fontSize: 14, fontWeight: '600', color: '#374151', width: 90 },
   detailValue: { fontSize: 14, color: '#64748b', flex: 1 },
   problemBox: { backgroundColor: '#f8fafc', padding: 12, borderRadius: 8, marginBottom: 12 },
+  problemDetailText: { fontSize: 14, color: '#64748b' },
   dateRow: { marginTop: 20, marginBottom: 20 },
   modalActions: { flexDirection: 'row', gap: 12, marginTop: 16 },
   modalButton: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
@@ -307,5 +354,4 @@ const styles = StyleSheet.create({
   cancelButtonText: { color: '#64748b', fontWeight: '700', fontSize: 16 },
   takeButton: { backgroundColor: '#0b3d91' },
   takeButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  empty: { color: '#64748b' },
 });

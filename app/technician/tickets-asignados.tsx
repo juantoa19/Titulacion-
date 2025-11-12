@@ -1,18 +1,144 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView, Modal, Alert } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Modal,
+  Alert,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { useAuth } from '../context/_AuthContext';
+import { apiFetch } from '../services/api'; 
+import { useFocusEffect, router } from 'expo-router'; // <--- CORREGIDO: Se añade router
 
 type TicketStatus = 'pendiente' | 'en_revision' | 'reparado' | 'cerrado';
 type Priority = 'alta' | 'media' | 'baja';
 
+interface Ticket {
+  id: string;
+  ticketId: string;
+  userId: string;
+  userInfo: {
+    nombre1: string;
+    nombre2?: string;
+    apellido1: string;
+    apellido2?: string;
+    cedula?: string;
+    telefono?: string;
+    email?: string;
+    direccion?: string;
+  };
+  deviceInfo: {
+    tipoDispositivo: string;
+    marca: string;
+    modelo: string;
+    numeroSerie?: string;
+  };
+  problema: string;
+  fechaSolicitud: string;
+  estado: TicketStatus;
+  prioridad?: Priority;
+  tecnicoAsignado?: string;
+}
+
+const mapApiToTicket = (apiTicket: any): Ticket => {
+  const usuario = apiTicket.usuario || {};
+  const tecnico = apiTicket.tecnico || {};
+  
+  const nombreCompleto = (usuario.name || 'Usuario Desconocido').split(' ');
+  const nombre1 = nombreCompleto[0] || '';
+  const apellido1 = nombreCompleto.length > 1 ? nombreCompleto[1] : '';
+
+  return {
+    id: apiTicket.id.toString(),
+    ticketId: `TKT-${apiTicket.id}`,
+    userId: apiTicket.user_id.toString(),
+    userInfo: {
+      nombre1: nombre1,
+      apellido1: apellido1,
+      cedula: usuario.cedula || 'N/A',
+      telefono: usuario.telefono || 'N/A',
+      email: usuario.email || 'N/A',
+      direccion: usuario.direccion || 'N/A',
+    },
+    deviceInfo: {
+      tipoDispositivo: apiTicket.tipo_dispositivo,
+      marca: apiTicket.marca,
+      modelo: apiTicket.modelo,
+      numeroSerie: apiTicket.numero_serie,
+    },
+    problema: apiTicket.descripcion_problema,
+    fechaSolicitud: apiTicket.created_at,
+    estado: apiTicket.estado_usuario,
+    prioridad: apiTicket.prioridad,
+    tecnicoAsignado: tecnico.name || 'Sin asignar',
+  };
+};
+
 export default function TicketsAsignados() {
-  const { user, tickets, updateTicketDetails } = useAuth();
-  const [selectedTicket, setSelectedTicket] = useState<(typeof tickets)[0] | null>(null);
+  const { user } = useAuth();
+  const [myTickets, setMyTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [newStatus, setNewStatus] = useState<TicketStatus | null>(null);
   const [newPriority, setNewPriority] = useState<Priority | null>(null);
 
-  // Filtrar tickets asignados al técnico actual
-  const myTickets = tickets.filter(t => (t as any).tecnicoAsignado === user?.name);
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyTickets();
+    }, [])
+  );
+
+  const fetchMyTickets = async () => {
+    try {
+      setLoading(true);
+      const data = await apiFetch('/my-tickets');
+      const mappedTickets: Ticket[] = data.map(mapApiToTicket);
+      setMyTickets(mappedTickets);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'No se pudieron cargar tus tickets asignados');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+  
+  const onRefresh = () => {
+      setRefreshing(true);
+      fetchMyTickets();
+  };
+
+  const handleSaveChanges = async () => {
+    if (!selectedTicket) return;
+
+    const statusToSend = newStatus || selectedTicket.estado;
+    const priorityToSend = newPriority || selectedTicket.prioridad;
+
+    try {
+      // CORREGIDO: Cambiado 'PUT' por 'PATCH' para coincidir con api.ts y Laravel
+      await apiFetch(`/tickets/${selectedTicket.id}`, 'PATCH', {
+        estado_usuario: statusToSend,
+        prioridad: priorityToSend,
+      });
+
+      Alert.alert('Éxito', `Ticket ${selectedTicket.ticketId} actualizado`);
+      setSelectedTicket(null);
+      setNewStatus(null);
+      setNewPriority(null);
+      fetchMyTickets(); 
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.message || 'No se pudo actualizar el ticket');
+    }
+  };
+
+  // --- Helpers de UI ---
 
   const getStatusColor = (status: TicketStatus) => {
     switch (status) {
@@ -23,6 +149,15 @@ export default function TicketsAsignados() {
       default: return '#6b7280';
     }
   };
+  
+  const getPriorityColor = (priority?: Priority) => {
+     switch (priority) {
+      case 'alta': return '#ef4444';
+      case 'media': return '#f59e0b';
+      case 'baja': return '#10b981';
+      default: return '#6b7280';
+    }
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-ES', {
@@ -30,25 +165,16 @@ export default function TicketsAsignados() {
     });
   };
 
-  const handleSaveChanges = () => {
-    if (selectedTicket) {
-      const status = newStatus || selectedTicket.estado;
-      const priority = newPriority || selectedTicket.prioridad;
-      updateTicketDetails(selectedTicket.id, status, priority as Priority);
-      Alert.alert('Éxito', `Ticket ${selectedTicket.ticketId} actualizado`);
-      setSelectedTicket(null);
-      setNewStatus(null);
-      setNewPriority(null);
-    }
-  };
+  // --- Componentes ---
 
-  const TicketCard = ({ ticket }: { ticket: (typeof tickets)[0] }) => (
+  const TicketCard = ({ ticket }: { ticket: Ticket }) => (
     <TouchableOpacity 
       style={styles.card} 
       onPress={() => {
         setSelectedTicket(ticket);
-        setNewStatus(null);
-        setNewPriority(null);
+        setNewStatus(ticket.estado);
+        // CORREGIDO: Añadido || null para evitar error de undefined
+        setNewPriority(ticket.prioridad || null); 
       }}
     >
       <View style={styles.ticketHeader}>
@@ -66,19 +192,19 @@ export default function TicketsAsignados() {
       <View style={styles.cardFooter}>
         <Text style={styles.dateText}>{formatDate(ticket.fechaSolicitud)}</Text>
         {ticket.prioridad ? (
-          <Text style={[styles.priorityText, { color: ticket.prioridad === 'alta' ? '#ef4444' : ticket.prioridad === 'media' ? '#f59e0b' : '#10b981' }]}>
+          <Text style={[styles.priorityText, { color: getPriorityColor(ticket.prioridad) }]}>
             {ticket.prioridad.toUpperCase()}
           </Text>
         ) : null}
       </View>
 
       <View style={styles.assignedBadge}>
-        <Text style={styles.assignedText}>👨‍🔧 {ticket.tecnicoAsignado || 'Sin asignar'}</Text>
+        <Text style={styles.assignedText}>👨‍🔧 Asignado a: {ticket.tecnicoAsignado}</Text>
       </View>
     </TouchableOpacity>
   );
 
-  const EditDetailModal = ({ ticket }: { ticket: (typeof tickets)[0] }) => (
+  const EditDetailModal = ({ ticket }: { ticket: Ticket }) => (
     <Modal transparent animationType="fade" visible={!!selectedTicket}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
@@ -110,7 +236,7 @@ export default function TicketsAsignados() {
             {/* Problema */}
             <Text style={styles.sectionTitle}>Descripción del Problema</Text>
             <View style={styles.problemBox}>
-              <Text style={styles.problemText}>{ticket.problema}</Text>
+              <Text style={styles.problemDetailText}>{ticket.problema}</Text>
             </View>
 
             {/* Cambiar Estado */}
@@ -125,7 +251,7 @@ export default function TicketsAsignados() {
                   ]}
                   onPress={() => setNewStatus(status)}
                 >
-                  <Text style={[(newStatus || ticket.estado) === status && styles.stateButtonTextActive]}>
+                  <Text style={[styles.stateButtonText, (newStatus || ticket.estado) === status && styles.stateButtonTextActive]}>
                     {status.replace('_', ' ')}
                   </Text>
                 </TouchableOpacity>
@@ -135,7 +261,7 @@ export default function TicketsAsignados() {
             {/* Cambiar Prioridad */}
             <Text style={styles.sectionTitle}>Cambiar Prioridad</Text>
             <View style={styles.buttonGrid}>
-              {(['alta', 'media', 'baja'] as Priority[]).map(priority => (
+              {(['baja', 'media', 'alta'] as Priority[]).map(priority => (
                 <TouchableOpacity
                   key={priority}
                   style={[
@@ -144,14 +270,14 @@ export default function TicketsAsignados() {
                   ]}
                   onPress={() => setNewPriority(priority)}
                 >
-                  <Text style={[(newPriority || ticket.prioridad) === priority && styles.priorityButtonTextActive]}>
+                  <Text style={[styles.priorityButtonText, (newPriority || ticket.prioridad) === priority && styles.priorityButtonTextActive]}>
                     {priority}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-                        <Text style={styles.technicianLabel}>Técnico Asignado: {ticket.tecnicoAsignado}</Text>
+            <Text style={styles.technicianLabel}>Técnico Asignado: {ticket.tecnicoAsignado}</Text>
           </ScrollView>
 
           <View style={styles.modalActions}>
@@ -170,16 +296,25 @@ export default function TicketsAsignados() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Mis Tickets Asignados</Text>
-      {myTickets.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No tienes tickets asignados aún.</Text>
-        </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#0b3d91" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={myTickets}
           keyExtractor={item => item.id}
           renderItem={({ item }) => <TicketCard ticket={item} />}
           contentContainerStyle={{ paddingBottom: 40 }}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No tienes tickets asignados aún.</Text>
+              <TouchableOpacity onPress={() => router.push('/technician/tickets-disponibles' as any)}>
+                 <Text style={styles.linkText}>Ver tickets disponibles</Text>
+              </TouchableOpacity>
+            </View>
+          }
+           refreshControl={
+             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       )}
       {selectedTicket && <EditDetailModal ticket={selectedTicket} />}
@@ -190,8 +325,22 @@ export default function TicketsAsignados() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#f8fafc' },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 12, color: '#0f172a' },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { fontSize: 16, color: '#94a3b8' },
+  emptyContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  emptyText: { 
+    fontSize: 16, 
+    color: '#94a3b8' 
+  },
+  linkText: {
+    fontSize: 16,
+    color: '#0b3d91',
+    fontWeight: '600',
+    marginTop: 10,
+  },
   card: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 12, shadowColor: 'rgba(15,23,42,0.06)', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 3 },
   ticketHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   ticketId: { fontWeight: '700', color: '#0f172a', fontSize: 16 },
@@ -204,7 +353,7 @@ const styles = StyleSheet.create({
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, alignItems: 'center' },
   dateText: { color: '#94a3b8', fontSize: 12 },
   priorityText: { fontWeight: '700', fontSize: 12 },
-  assignedBadge: { backgroundColor: '#e6f0ff', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, marginTop: 10 },
+  assignedBadge: { alignSelf: 'flex-start', backgroundColor: '#e6f0ff', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, marginTop: 12 },
   assignedText: { color: '#0b3d91', fontWeight: '600', fontSize: 12 },
 
   // Modal styles
@@ -216,13 +365,19 @@ const styles = StyleSheet.create({
   detailLabel: { fontSize: 14, fontWeight: '600', color: '#374151', width: 90 },
   detailValue: { fontSize: 14, color: '#64748b', flex: 1 },
   problemBox: { backgroundColor: '#f8fafc', padding: 12, borderRadius: 8, marginBottom: 12 },
+  problemDetailText: { fontSize: 14, color: '#64748b' },
+  
   buttonGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
-  stateButton: { flex: 1, minWidth: '45%', paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#f1f5f9', borderRadius: 8, borderWidth: 2, borderColor: 'transparent', alignItems: 'center' },
-  stateButtonActive: { backgroundColor: '#0b3d91', borderColor: '#0b3d91' },
-  stateButtonTextActive: { color: '#fff', fontWeight: '700' },
-  priorityButton: { flex: 1, minWidth: '30%', paddingVertical: 10, backgroundColor: '#f1f5f9', borderRadius: 8, borderWidth: 2, borderColor: 'transparent', alignItems: 'center' },
-  priorityButtonActive: { backgroundColor: '#0b3d91', borderColor: '#0b3d91' },
-  priorityButtonTextActive: { color: '#fff', fontWeight: '700' },
+  stateButton: { flexGrow: 1, minWidth: '45%', paddingVertical: 12, paddingHorizontal: 12, backgroundColor: '#f1f5f9', borderRadius: 8, borderWidth: 2, borderColor: '#f1f5f9', alignItems: 'center' },
+  stateButtonActive: { backgroundColor: '#e6f0ff', borderColor: '#0b3d91' },
+  stateButtonText: { color: '#374151', fontWeight: '600', textTransform: 'capitalize' },
+  stateButtonTextActive: { color: '#0b3d91', fontWeight: '700' },
+  
+  priorityButton: { flexGrow: 1, minWidth: '30%', paddingVertical: 12, backgroundColor: '#f1f5f9', borderRadius: 8, borderWidth: 2, borderColor: '#f1f5f9', alignItems: 'center' },
+  priorityButtonActive: { backgroundColor: '#e6f0ff', borderColor: '#0b3d91' },
+  priorityButtonText: { color: '#374151', fontWeight: '600', textTransform: 'capitalize' },
+  priorityButtonTextActive: { color: '#0b3d91', fontWeight: '700' },
+  
   technicianLabel: { fontSize: 14, color: '#374151', fontWeight: '600', marginTop: 20, marginBottom: 20 },
   modalActions: { flexDirection: 'row', gap: 12, marginTop: 16 },
   modalButton: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
