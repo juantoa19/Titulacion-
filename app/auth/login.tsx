@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Alert, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
   ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
@@ -25,7 +25,7 @@ export default function LoginScreen() {
     email: false,
     password: false
   });
-  
+
   const { login } = useAuth();
 
   // Animaciones
@@ -59,32 +59,28 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      // 2. CREA EL OBJETO 'LoginData'
-      const loginData: LoginData = {
-        email: email,
-        password: password
-      };
+      // 1. Modifica esto para capturar el usuario que devuelve el context
+      const user = await login({ email, password }); // Asegúrate de pasar un objeto si tu context lo espera así
 
-      // 3. PASA EL OBJETO (1 ARGUMENTO)
-      const user = await login(loginData);
-      
-      // 4. Usa el ROL REAL que devuelve la API
-      const userRole = user.role;
-      
-      const path =
-        userRole === 'admin' ? '/admin/index' : // Asegúrate que la ruta sea completa
-        userRole === 'technician' ? '/technician/dashboard' :
-        '/user/dashboard';
+      // 2. Usa el rol REAL que viene de la base de datos
+      // Asegúrate de comparar con el string exacto que envía Laravel (minúsculas)
+      const role = user.role;
 
-      router.replace(path as any);
-    } catch (error: any) {
-      // Manejo de errores mejorado
-      if (error.response && error.response.status === 401) {
-        Alert.alert('Error', 'Credenciales inválidas');
+      console.log("Rol detectado para redirección:", role); // Para debug
+
+      if (role === 'admin') {
+        router.replace('/admin/index' as any);
+      } else if (role === 'tecnico') {
+        router.replace('/technician/dashboard' as any);
+      } else if (role === 'usuario') {
+        router.replace('/user/dashboard' as any);
       } else {
-        console.error(error); // Muestra el error completo en la consola
-        Alert.alert('Error de Red', 'No se pudo conectar al servidor. Revisa tu IP y que el backend esté corriendo.');
+        // Opcional: Manejar caso de rol desconocido o dejar un fallback
+        Alert.alert('Error', 'Rol desconocido o no autorizado');
       }
+    } catch (error: any) {
+      console.error(error);
+      Alert.alert('Error', 'Credenciales incorrectas o error de conexión');
     } finally {
       setLoading(false);
     }
@@ -109,7 +105,7 @@ export default function LoginScreen() {
   });
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
@@ -117,7 +113,7 @@ export default function LoginScreen() {
         <View style={styles.inner}>
           {/* Header con gradiente */}
           <View style={styles.header}>
-            <Animated.Text 
+            <Animated.Text
               style={[
                 styles.title,
                 {
@@ -132,7 +128,7 @@ export default function LoginScreen() {
             </Text>
           </View>
 
-          <Animated.View 
+          <Animated.View
             style={[
               styles.formContainer,
               {
@@ -143,7 +139,7 @@ export default function LoginScreen() {
             {/* Input de Email */}
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Correo electrónico</Text>
-              <TextInput 
+              <TextInput
                 style={[
                   styles.input,
                   isFocused.email && styles.inputFocused
@@ -161,7 +157,7 @@ export default function LoginScreen() {
             {/* Input de Contraseña */}
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Contraseña</Text>
-              <TextInput 
+              <TextInput
                 style={[
                   styles.input,
                   isFocused.password && styles.inputFocused
@@ -176,13 +172,13 @@ export default function LoginScreen() {
             </View>
 
             {/* Botón de Login */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
                 styles.button,
                 loading && styles.buttonDisabled,
                 (!email || !password) && styles.buttonDisabled
-              ]} 
-              onPress={handleLogin} 
+              ]}
+              onPress={handleLogin}
               disabled={loading || !email || !password}
             >
               {loading ? (

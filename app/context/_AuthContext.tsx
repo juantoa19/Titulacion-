@@ -17,7 +17,7 @@ export interface User {
   email_verified_at: string | null;
   created_at: string;
   updated_at: string;
-  role: 'admin' | 'technician' | 'user'; 
+  role: 'admin' | 'tecnico' | 'usuario'; 
 }
 
 export interface Ticket {
@@ -149,15 +149,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ... (Funciones login, register, logout sin cambios) ...
   const login = async (data: LoginData) => {
     const response = await apiFetch('/login', 'POST', data);
+    
+    // 1. CREAR EL USUARIO COMPLETO FUSIONANDO EL ROL
+    // Como 'role' viene afuera en tu API, lo metemos a la fuerza dentro del objeto user
+    const userWithRole = {
+      ...response.user,
+      role: response.role // <--- AQUÍ ESTÁ LA MAGIA
+    };
+
     setToken(response.token);
     await AsyncStorage.setItem(TOKEN_KEY, response.token);
-    setUser(response.user);
+    
+    // 2. GUARDAR EL USUARIO CON EL ROL YA INCLUIDO
+    setUser(userWithRole);
+    
+    // Opcional: Cargar tickets
     await fetchUserTickets(response.token);
-    return response.user;
+    
+    // 3. RETORNAR EL USUARIO CORREGIDO (Para que el LoginScreen lo lea bien)
+    return userWithRole;
   };
+
   const register = async (data: RegisterData) => {
     await apiFetch('/register', 'POST', data);
   };
+
   const logout = async () => {
     try {
       await apiFetch('/logout', 'POST');
@@ -239,7 +255,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const redirectToPanel = (role: string) => {
     if (role === 'admin') {
       router.replace('/admin/index' as Href);
-    } else if (role === 'technician') {
+    } else if (role === 'tecnico') {
       router.replace('/technician/dashboard' as Href);
     } else {
       router.replace('/user/dashboard' as Href);
