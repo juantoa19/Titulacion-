@@ -13,7 +13,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard
 } from 'react-native';
-// 1. Importa el tipo LoginData
+// Elimina la importación duplicada y deja solo la correcta
 import { useAuth, LoginData } from '../context/_AuthContext';
 import { router } from 'expo-router';
 

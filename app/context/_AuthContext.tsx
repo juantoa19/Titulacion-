@@ -64,33 +64,17 @@ export interface RegisterData {
   password_confirmation: string;
 }
 
-// 2. AÑADIDA LA INTERFAZ DE NOTIFICACIÓN
-export interface Notification {
-  id: string;
-  userId: string; 
-  title: string;
-  message: string;
-  ticketId?: string;
-  date: string;
-  read: boolean;
-}
-
-// 3. ACTUALIZADA LA INTERFAZ DEL CONTEXTO
+// Interfaz del Contexto
 interface AuthContextType {
   user: User | null;
   token: string | null;
   tickets: Ticket[];
-  notifications: Notification[]; // <-- AÑADIDO
   isLoading: boolean;
   login: (data: LoginData) => Promise<User>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   fetchUserTickets: (currentToken?: string | null) => Promise<void>;
   createTicket: (data: TicketFormData) => Promise<void>;
-  // Funciones de notificación (simuladas por ahora)
-  addNotification: (n: Omit<Notification, 'id' | 'date' | 'read'>) => Notification; 
-  markNotificationRead: (id: string) => void;
-  markAllNotificationsRead: (userId?: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -109,8 +93,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  // 4. AÑADIDO EL ESTADO DE NOTIFICACIONES
-  const [notifications, setNotifications] = useState<Notification[]>([]); 
   const [isLoading, setIsLoading] = useState(true); 
   const segments = useSegments();
 
@@ -183,7 +165,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setToken(null);
       setTickets([]);
-      setNotifications([]); // Limpiar notificaciones
       await AsyncStorage.removeItem(TOKEN_KEY);
     }
   };
@@ -215,39 +196,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // En su lugar, volvemos a cargar la lista completa desde la API.
       // Esto garantiza que los datos (incluyendo el estado 'pendiente') son 100% correctos.
       await fetchUserTickets(token); 
-
-      // 3. Simular la notificación (esto está bien)
-      if (user) {
-        addNotification({
-          userId: String(user.id),
-          title: 'Ticket Creado',
-          message: `Tu ticket #${newTicket.id} ha sido creado.`, // newTicket.id sí existe
-          ticketId: String(newTicket.id)
-        });
-      }
-
     } catch (error) {
       console.error('Error al crear ticket:', error);
       throw error;
     }
-  };
-
-
-  // 6. AÑADIDAS: Funciones de Notificación (Simuladas)
-  const addNotification = (n: Omit<Notification, 'id' | 'date' | 'read'>) => {
-    const id = Math.random().toString(36).slice(2, 9);
-    const newN: Notification = { id, ...n, date: new Date().toISOString(), read: false };
-    setNotifications(prev => [newN, ...prev]);
-    return newN;
-  };
-
-  const markNotificationRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
-
-  const markAllNotificationsRead = (userId?: string) => {
-    if (!userId) return;
-    setNotifications(prev => prev.map(n => (n.userId === userId ? { ...n, read: true } : n)));
   };
 
 
@@ -262,21 +214,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 7. AÑADIDO: 'notifications' y sus funciones al 'value'
   const value = {
     user,
     token,
     tickets,
-    notifications, // <-- AÑADIDO
     isLoading,
     login,
     register,
     logout,
     fetchUserTickets,
     createTicket,
-    addNotification, // <-- AÑADIDO
-    markNotificationRead, // <-- AÑADIDO
-    markAllNotificationsRead, // <-- AÑADIDO
   };
 
   return (

@@ -70,6 +70,13 @@ export default function RegisterScreen() {
     ]).start();
   }, []);
 
+  // Nueva función para manejar solo inputs numéricos
+  const handleNumericChange = (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
+    // Reemplaza cualquier caracter que NO sea un número con una cadena vacía
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setter(numericValue);
+  };
+
   const handleRegister = async () => {
     // 5. CORREGIDO: Comprobar campos obligatorios correctos
     if (!email || !password || !confirmPassword || !nombre1 || !apellido1 || !cedula || !telefono) {
@@ -85,6 +92,11 @@ export default function RegisterScreen() {
     // 6. CORREGIDO: Mínimo 8 caracteres para coincidir con Laravel
     if (password.length < 8) { 
       Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+
+    if (cedula.length !== 10 || telefono.length !== 10) {
+      Alert.alert('Error de Formato', 'La cédula y el teléfono deben tener 10 dígitos.');
       return;
     }
 
@@ -215,9 +227,10 @@ export default function RegisterScreen() {
                     ]}
                     placeholder="Primer nombre"
                     value={nombre1}
-                    onChangeText={setNombre1} // 10. CORREGIDO
+                    onChangeText={setNombre1}
                     onFocus={() => handleFocus('nombre1')}
                     onBlur={() => handleBlur('nombre1')}
+                    maxLength={50}
                   />
                 </View>
                 <View style={styles.halfInput}>
@@ -233,6 +246,7 @@ export default function RegisterScreen() {
                     onChangeText={setNombre2}
                     onFocus={() => handleFocus('nombre2')}
                     onBlur={() => handleBlur('nombre2')}
+                    maxLength={50}
                   />
                 </View>
               </View>
@@ -252,6 +266,7 @@ export default function RegisterScreen() {
                     onChangeText={setApellido1}
                     onFocus={() => handleFocus('apellido1')}
                     onBlur={() => handleBlur('apellido1')}
+                    maxLength={50}
                   />
                 </View>
                 <View style={styles.halfInput}>
@@ -267,6 +282,7 @@ export default function RegisterScreen() {
                     onChangeText={setApellido2}
                     onFocus={() => handleFocus('apellido2')}
                     onBlur={() => handleBlur('apellido2')}
+                    maxLength={50}
                   />
                 </View>
               </View>
@@ -283,10 +299,11 @@ export default function RegisterScreen() {
                     ]}
                     placeholder="Número de cédula"
                     value={cedula}
-                    onChangeText={setCedula}
+                    onChangeText={(text) => handleNumericChange(setCedula, text)}
                     keyboardType="numeric"
                     onFocus={() => handleFocus('cedula')}
                     onBlur={() => handleBlur('cedula')}
+                    maxLength={10}
                   />
                 </View>
                 <View style={styles.halfInput}>
@@ -299,10 +316,11 @@ export default function RegisterScreen() {
                     ]}
                     placeholder="Teléfono"
                     value={telefono}
-                    onChangeText={setTelefono}
+                    onChangeText={(text) => handleNumericChange(setTelefono, text)}
                     keyboardType="phone-pad"
                     onFocus={() => handleFocus('telefono')}
                     onBlur={() => handleBlur('telefono')}
+                    maxLength={10}
                   />
                 </View>
               </View>
@@ -321,6 +339,7 @@ export default function RegisterScreen() {
                   onChangeText={setDireccion}
                   onFocus={() => handleFocus('direccion')}
                   onBlur={() => handleBlur('direccion')}
+                  maxLength={255}
                 />
               </View>
 
@@ -345,6 +364,7 @@ export default function RegisterScreen() {
                   autoCapitalize="none"
                   onFocus={() => handleFocus('email')}
                   onBlur={() => handleBlur('email')}
+                  maxLength={254}
                 />
               </View>
 
