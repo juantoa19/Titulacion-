@@ -8,8 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function UserDashboard() {
   // 3. Obtener la función 'logout' del contexto
-  const { user, notifications, logout } = useAuth();
-  const unreadCount = notifications.filter(n => n.userId === (user?.id || '') && !n.read).length;
+  const { user, logout } = useAuth();
 
   // 4. Usar ScrollView para que el botón de logout no se corte en pantallas pequeñas
   return (
@@ -20,14 +19,6 @@ export default function UserDashboard() {
         <View style={styles.decorativeCircle2}></View>
         <View style={styles.decorativeCircle3}></View>
         
-        <TouchableOpacity style={styles.notifButton} onPress={() => router.push('/user/notifications' as any)}>
-          <Text style={styles.notifIcon}>🔔</Text>
-          {unreadCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{unreadCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
         
         <View style={styles.avatarContainer}>
           <View style={styles.avatarBackground}>

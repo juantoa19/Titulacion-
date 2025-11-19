@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Tu servidor de Laravel debe correr en esa IP:
 // php artisan serve --host=192.168.1.10
 // -------------------------------------------------------------------------
-const API_URL = 'http://192.168.100.140:8000'; // <--- ¡CAMBIA ESTO! (Sin /api)
+const API_URL = 'https://soportechm-production.up.railway.app'; // <--- ¡CAMBIA ESTO! (Sin /api)
 
 // 1. AÑADIR EXPORT
 export const TOKEN_KEY = 'token'; 
