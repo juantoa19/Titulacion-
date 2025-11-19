@@ -153,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (data: RegisterData) => {
-    await apiFetch('/register', 'POST', data);
+    await apiFetch('/signup', 'POST', data);
   };
 
   const logout = async () => {
