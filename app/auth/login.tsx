@@ -13,8 +13,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard
 } from 'react-native';
-// Elimina la importación duplicada y deja solo la correcta
-import { useAuth, LoginData } from '../context/_AuthContext';
+import { useAuth } from '../context/_AuthContext'; 
 import { router } from 'expo-router';
 
 export default function LoginScreen() {
@@ -33,7 +32,6 @@ export default function LoginScreen() {
   const formAnim = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
-    // Animación de entrada
     Animated.parallel([
       Animated.spring(titleAnim, {
         toValue: 1,
@@ -59,30 +57,14 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      // 1. Modifica esto para capturar el usuario que devuelve el context
-      const user = await login({ email, password }); // Asegúrate de pasar un objeto si tu context lo espera así
-
-      // 2. Usa el rol REAL que viene de la base de datos
-      // Asegúrate de comparar con el string exacto que envía Laravel (minúsculas)
-      const role = user.role;
-
-      console.log("Rol detectado para redirección:", role); // Para debug
-
-      if (role === 'admin') {
-        router.replace('/admin/index' as any);
-      } else if (role === 'tecnico') {
-        router.replace('/technician/dashboard' as any);
-      } else if (role === 'usuario') {
-        router.replace('/user/dashboard' as any);
-      } else {
-        // Opcional: Manejar caso de rol desconocido o dejar un fallback
-        Alert.alert('Error', 'Rol desconocido o no autorizado');
-      }
+      // SOLO llamamos al login. NO redirigimos manualmente.
+      // El cambio de estado en 'user' disparará el useEffect en _layout.tsx
+      await login({ email, password });
+      
     } catch (error: any) {
       console.error(error);
       Alert.alert('Error', 'Credenciales incorrectas o error de conexión');
-    } finally {
-      setLoading(false);
+      setLoading(false); 
     }
   };
 
@@ -111,14 +93,11 @@ export default function LoginScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.inner}>
-          {/* Header con gradiente */}
           <View style={styles.header}>
             <Animated.Text
               style={[
                 styles.title,
-                {
-                  transform: [{ scale: titleScale }]
-                }
+                { transform: [{ scale: titleScale }] }
               ]}
             >
               Bienvenido
@@ -131,12 +110,9 @@ export default function LoginScreen() {
           <Animated.View
             style={[
               styles.formContainer,
-              {
-                transform: [{ translateY: formTranslateY }]
-              }
+              { transform: [{ translateY: formTranslateY }] }
             ]}
           >
-            {/* Input de Email */}
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Correo electrónico</Text>
               <TextInput
@@ -154,7 +130,6 @@ export default function LoginScreen() {
               />
             </View>
 
-            {/* Input de Contraseña */}
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Contraseña</Text>
               <TextInput
@@ -171,7 +146,6 @@ export default function LoginScreen() {
               />
             </View>
 
-            {/* Botón de Login */}
             <TouchableOpacity
               style={[
                 styles.button,
@@ -188,13 +162,11 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            {/* Texto de demo */}
             <View style={styles.demoContainer}>
               <Text style={styles.demoTitle}>Credenciales de prueba:</Text>
               <Text style={styles.demoText}>• admin@proyecto.com (pass: password123)</Text>
             </View>
 
-            {/* Link de registro */}
             <View style={styles.registerContainer}>
               <Text style={styles.registerText}>¿No tienes cuenta? </Text>
               <TouchableOpacity onPress={() => router.push('/auth/register')}>
@@ -239,10 +211,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 8,
@@ -265,10 +234,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1e293b',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
@@ -287,10 +253,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
     shadowColor: '#3b82f6',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 6,
