@@ -1,9 +1,9 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { router, useSegments, Href } from 'expo-router';
+// Quitamos useRouter y useSegments de aquí para evitar conflictos
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 import { apiFetch, TOKEN_KEY } from '../services/api'; 
 
-// --- 1. INTERFACES (SIN CAMBIOS) ---
+// --- 1. INTERFACES ---
 export interface User {
   id: number;
   name: string;
@@ -64,7 +64,6 @@ export interface RegisterData {
   password_confirmation: string;
 }
 
-// Interfaz del Contexto
 interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -87,16 +86,12 @@ export function useAuth() {
   return context;
 }
 
-// --- EL PROVEEDOR (PROVIDER) ---
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true); 
-  const segments = useSegments();
 
-  // ... (Efecto loadUserFromToken sin cambios) ...
   useEffect(() => {
     async function loadUserFromToken() {
       try {
@@ -104,8 +99,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (storedToken) {
           setToken(storedToken);
           const data = await apiFetch('/user', 'GET', null, storedToken);
-          setUser(data.user);
-          await fetchUserTickets(storedToken); 
+          // Aseguramos que el rol esté presente en el objeto usuario
+          const userWithRole = { ...data, role: data.role || data.roles?.[0]?.name }; 
+          setUser(userWithRole);
+          
+          if (userWithRole.role !== 'admin') {
+             await fetchUserTickets(storedToken); 
+          }
         }
       } catch (e) {
         console.error('Error al cargar usuario desde token:', e);
@@ -117,38 +117,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUserFromToken();
   }, []);
 
-  // ... (Efecto Guardián de Rutas sin cambios) ...
-  useEffect(() => {
-    if (isLoading) return; 
-    const inAuthGroup = segments[0] === 'auth';
-    if (!user && !inAuthGroup) {
-      router.replace('/auth/login' as Href);
-    } else if (user && inAuthGroup) {
-      redirectToPanel(user.role);
-    }
-  }, [user, isLoading, segments]);
+  // --- ELIMINADO: useEffect de redirección (Se mueve a _layout.tsx) ---
 
-  // ... (Funciones login, register, logout sin cambios) ...
   const login = async (data: LoginData) => {
     const response = await apiFetch('/login', 'POST', data);
     
-    // 1. CREAR EL USUARIO COMPLETO FUSIONANDO EL ROL
-    // Como 'role' viene afuera en tu API, lo metemos a la fuerza dentro del objeto user
     const userWithRole = {
       ...response.user,
-      role: response.role // <--- AQUÍ ESTÁ LA MAGIA
+      role: response.role 
     };
 
     setToken(response.token);
     await AsyncStorage.setItem(TOKEN_KEY, response.token);
-    
-    // 2. GUARDAR EL USUARIO CON EL ROL YA INCLUIDO
     setUser(userWithRole);
     
-    // Opcional: Cargar tickets
-    await fetchUserTickets(response.token);
+    if (userWithRole.role !== 'admin') {
+        await fetchUserTickets(response.token);
+    }
     
-    // 3. RETORNAR EL USUARIO CORREGIDO (Para que el LoginScreen lo lea bien)
     return userWithRole;
   };
 
@@ -160,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await apiFetch('/logout', 'POST');
     } catch (e) {
-      console.error('Error al hacer logout en API:', e);
+      console.error('Error logout API:', e);
     } finally {
       setUser(null);
       setToken(null);
@@ -169,8 +155,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-
-  // ... (Funciones fetchUserTickets, createTicket sin cambios) ...
   const fetchUserTickets = async (currentToken?: string | null) => {
     const t = token || currentToken;
     if (!t) return; 
@@ -178,39 +162,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userTickets = await apiFetch('/tickets', 'GET', null, t);
       setTickets(userTickets);
     } catch (e) {
-      console.error('Error al cargar tickets:', e);
-      if ((e as any).response?.status === 401) {
-        logout();
-      }
+      console.error('Error tickets:', e);
     }
   };
 
-  // --- ¡AQUÍ ESTÁ LA CORRECCIÓN CLAVE! ---
   const createTicket = async (formData: TicketFormData) => {
     if (!token) throw new Error('No autenticado');
     try {
-      // 1. Llama a la API para crear el ticket
-      const newTicket = await apiFetch('/tickets', 'POST', formData, token);
-      
-      // 2. CORRECCIÓN: No añadir 'newTicket' al estado local.
-      // En su lugar, volvemos a cargar la lista completa desde la API.
-      // Esto garantiza que los datos (incluyendo el estado 'pendiente') son 100% correctos.
+      await apiFetch('/tickets', 'POST', formData, token);
       await fetchUserTickets(token); 
     } catch (error) {
-      console.error('Error al crear ticket:', error);
+      console.error('Error create ticket:', error);
       throw error;
-    }
-  };
-
-
-  // ... (Función redirectToPanel sin cambios) ...
-  const redirectToPanel = (role: string) => {
-    if (role === 'admin') {
-      router.replace('/admin/index' as Href);
-    } else if (role === 'tecnico') {
-      router.replace('/technician/dashboard' as Href);
-    } else {
-      router.replace('/user/dashboard' as Href);
     }
   };
 
