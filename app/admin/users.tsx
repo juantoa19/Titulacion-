@@ -79,25 +79,45 @@ export default function UsersManagement() {
   }, [users, searchQuery, selectedRole]);
 
   // Cambiar Rol
-  const makeTechnician = async (userId: number, currentRole: string) => {
-    const newRole = currentRole === 'tecnico' ? 'usuario' : 'tecnico';
-    const actionText = newRole === 'tecnico' ? 'hacer TÉCNICO' : 'quitar rol técnico';
-
+  const changeRole = async (userId: number, roleName: string, actionDescription: string) => {
     Alert.alert(
       'Cambiar Rol',
-      `¿Seguro que deseas ${actionText} a este usuario?`,
+      `¿Estás seguro de que deseas ${actionDescription}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Confirmar',
           onPress: async () => {
             try {
-              // Nota: Usamos PATCH o PUT según tu backend
-              await apiFetch(`/admin/users/${userId}/role`, 'PUT', { role: newRole });
+              // Llamada a la API que ya tienes configurada
+              await apiFetch(`/admin/users/${userId}/role`, 'PUT', { role: roleName });
               Alert.alert('Éxito', 'Rol actualizado correctamente');
               loadUsers(); 
             } catch (error: any) {
               Alert.alert('Error', error.message || 'Error al actualizar rol');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const deleteUser = async (userId: number) => {
+    Alert.alert(
+      'Eliminar Usuario',
+      '¿Estás seguro de que deseas eliminar este usuario permanentemente? Esta acción no se puede deshacer.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await apiFetch(`/admin/users/${userId}`, 'DELETE');
+              Alert.alert('Eliminado', 'El usuario ha sido eliminado.');
+              loadUsers(); // Recargar lista
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'No se pudo eliminar');
             }
           },
         },
@@ -110,9 +130,17 @@ export default function UsersManagement() {
     const isTech = item.roles.some(r => r.name === 'tecnico');
     const isAdmin = item.roles.some(r => r.name === 'admin');
     
-    // Color de borde/icono según rol
-    const roleColor = isAdmin ? '#f5dd05ff' : isTech ? '#3b82f6' : '#64748b';
-    const roleIcon = isAdmin ? 'shield-account' : isTech ? 'wrench' : 'account';
+    // Configuración visual según rol
+    let roleColor = '#64748b'; // Usuario (Gris)
+    let roleIcon = 'account';
+    
+    if (isAdmin) {
+      roleColor = '#eab308'; // Admin (Dorado)
+      roleIcon = 'shield-crown';
+    } else if (isTech) {
+      roleColor = '#3b82f6'; // Técnico (Azul)
+      roleIcon = 'wrench';
+    }
 
     return (
       <View style={[styles.card, { borderLeftColor: roleColor, borderLeftWidth: 4 }]}>
@@ -120,30 +148,69 @@ export default function UsersManagement() {
           <View style={styles.userInfo}>
             <View style={styles.headerRow}>
               <Text style={styles.userName}>{item.name}</Text>
-              {isAdmin && <MaterialCommunityIcons name="crown" size={16} color="#fbbf24" />}
+              {isAdmin && <MaterialCommunityIcons name="crown" size={16} color="#eab308" />}
             </View>
             <Text style={styles.userEmail}>{item.email}</Text>
             
             <View style={[styles.roleBadge, { backgroundColor: roleColor + '20' }]}>
-              <MaterialCommunityIcons name={roleIcon} size={12} color={roleColor} />
+              <MaterialCommunityIcons name={roleIcon as any} size={12} color={roleColor} />
               <Text style={[styles.roleText, { color: roleColor }]}>
                 {item.roles.map(r => r.name).join(', ') || 'usuario'}
               </Text>
             </View>
           </View>
 
-          {!isAdmin && (
+          {/* --- BOTONES DE ACCIÓN --- */}
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            
+            {/* 1. Botón para ADMINISTRADORES: Bajar a Técnico */}
+            {isAdmin && (
+               <TouchableOpacity 
+                 style={[styles.actionButton, { backgroundColor: '#3b82f6' }]}
+                 onPress={() => changeRole(item.id, 'tecnico', 'degradar a TÉCNICO')}
+               >
+                 <MaterialCommunityIcons name="arrow-down-bold" size={20} color="white" />
+               </TouchableOpacity>
+            )}
+
+            {/* 2. Botón para NO ADMINS: Subir a Admin */}
+            {!isAdmin && (
+              <TouchableOpacity 
+                style={[styles.actionButton, { backgroundColor: '#eab308' }]}
+                onPress={() => changeRole(item.id, 'admin', 'ascender a ADMINISTRADOR')}
+              >
+                <MaterialCommunityIcons name="crown" size={20} color="white" />
+              </TouchableOpacity>
+            )}
+
+            {/* 3. Botón TÉCNICO/USUARIO (Switch) */}
+            {!isAdmin && (
+              <TouchableOpacity 
+                style={[styles.actionButton, isTech ? styles.btnRevoke : styles.btnPromote]}
+                onPress={() => {
+                   // Si es técnico -> baja a usuario. Si es usuario -> sube a técnico.
+                   const newRole = isTech ? 'usuario' : 'tecnico';
+                   const text = isTech ? 'quitar rol de técnico' : 'hacer TÉCNICO';
+                   changeRole(item.id, newRole, text);
+                }}
+              >
+                <MaterialCommunityIcons 
+                  name={isTech ? "account" : "wrench"} 
+                  size={20} 
+                  color="white" 
+                />
+              </TouchableOpacity>
+            )}
+
+            {/* 4. BOTÓN ELIMINAR (NUEVO) - Rojo siempre */}
             <TouchableOpacity 
-              style={[styles.actionButton, isTech ? styles.btnRevoke : styles.btnPromote]}
-              onPress={() => makeTechnician(item.id, isTech ? 'tecnico' : 'usuario')}
+              style={[styles.actionButton, { backgroundColor: '#ef4444' }]}
+              onPress={() => deleteUser(item.id)}
             >
-              <MaterialCommunityIcons 
-                name={isTech ? "account-arrow-left" : "account-wrench"} 
-                size={20} 
-                color="white" 
-              />
+              <MaterialCommunityIcons name="trash-can" size={20} color="white" />
             </TouchableOpacity>
-          )}
+
+          </View>
         </View>
       </View>
     );
