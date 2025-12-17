@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Tu servidor de Laravel debe correr en esa IP:
 // php artisan serve --host=192.168.1.10
 // -------------------------------------------------------------------------
-export const API_URL = 'https://soportechm-production.up.railway.app'; // <--- ¡CAMBIA ESTO! (Sin /api)
+export const API_URL = 'http://192.168.100.145:8000'; // <--- ¡CAMBIA ESTO! (Sin /api)
 
 // 1. AÑADIR EXPORT
 export const TOKEN_KEY = 'token'; 
@@ -64,7 +64,17 @@ export async function apiFetch(endpoint: string, method: 'GET' | 'POST' | 'PATCH
     };
     throw error;
   }
-
   // 7. Devolver los datos
   return data;
+}
+
+export async function searchClientByCedula(cedula: string) {
+  try {
+    // Llama al endpoint que creamos en Laravel: /api/clients/search/{cedula}
+    const data = await apiFetch(`/clients/search/${cedula}`, 'GET');
+    return data; // Devuelve el objeto cliente { nombre, direccion, celular, ... }
+  } catch (error: any) {
+    // Si es 404, lanzamos el error para manejarlo en la vista (habilitar campos)
+    throw error;
+  }
 }

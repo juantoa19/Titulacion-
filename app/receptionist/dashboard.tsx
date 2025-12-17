@@ -44,7 +44,7 @@ export default function UserDashboard() {
       <View style={styles.buttonsRow}>
         <TouchableOpacity 
           style={[styles.card, styles.cardCreate]} 
-          onPress={() => router.push('/user/create-ticket' as any)}
+          onPress={() => router.push('/receptionist/create-ticket' as any)}
         >
           <View style={styles.cardBackground}></View>
           <View style={styles.cardContent}>
@@ -58,7 +58,7 @@ export default function UserDashboard() {
 
         <TouchableOpacity 
           style={[styles.card, styles.cardStatus]} 
-          onPress={() => router.push('/user/ticket-status' as any)}
+          onPress={() => router.push('/receptionist/ticket-status' as any)}
         >
           <View style={styles.cardBackground}></View>
           <View style={styles.cardContent}>
