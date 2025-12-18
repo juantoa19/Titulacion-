@@ -65,8 +65,8 @@ export default function UserDashboard() {
             <View style={[styles.cardIcon, styles.iconStatus]}>
               <Text style={styles.iconText}>📊</Text>
             </View>
-            <Text style={styles.cardTitle}>Estado del Ticket</Text>
-            <Text style={styles.cardSubtitle}>Ver el estado de tus tickets</Text>
+            <Text style={styles.cardTitle}>Estado de los Tickets</Text>
+            <Text style={styles.cardSubtitle}>Ver el estado de los tickets</Text>
           </View>
         </TouchableOpacity>
       </View>

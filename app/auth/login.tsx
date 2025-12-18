@@ -11,15 +11,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
-  Keyboard
+  Keyboard,
 } from 'react-native';
-import { useAuth } from '../context/_AuthContext'; 
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../context/_AuthContext';
 import { router } from 'expo-router';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState({
     email: false,
     password: false
@@ -60,11 +62,11 @@ export default function LoginScreen() {
       // SOLO llamamos al login. NO redirigimos manualmente.
       // El cambio de estado en 'user' disparará el useEffect en _layout.tsx
       await login({ email, password });
-      
+
     } catch (error: any) {
       console.error(error);
       Alert.alert('Error', 'Credenciales incorrectas o error de conexión');
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -132,18 +134,33 @@ export default function LoginScreen() {
 
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Contraseña</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  isFocused.password && styles.inputFocused
-                ]}
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                onFocus={() => handleFocus('password')}
-                onBlur={() => handleBlur('password')}
-              />
+
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={[
+                    styles.input,
+                    styles.passwordInput,
+                    isFocused.password && styles.inputFocused
+                  ]}
+                  placeholder="••••••••"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  onFocus={() => handleFocus('password')}
+                  onBlur={() => handleBlur('password')}
+                />
+
+                <TouchableOpacity
+                  style={styles.eyeButton}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={22}
+                    color="#64748b"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <TouchableOpacity
@@ -162,13 +179,8 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            <View style={styles.demoContainer}>
-              <Text style={styles.demoTitle}>Credenciales de prueba:</Text>
-              <Text style={styles.demoText}>• admin@proyecto.com (pass: password123)</Text>
-            </View>
-
             <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+              <Text style={styles.registerText}>¿Trabajas aquí? </Text>
               <TouchableOpacity onPress={() => router.push('/auth/register')}>
                 <Text style={styles.registerLink}>Regístrate aquí</Text>
               </TouchableOpacity>
@@ -299,5 +311,24 @@ const styles = StyleSheet.create({
     color: '#3b82f6',
     fontWeight: '600',
     fontSize: 14,
+  },
+
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  passwordInput: {
+    flex: 1,
+    paddingRight: 50, // espacio para el icono
+  },
+
+  eyeButton: {
+    position: 'absolute',
+    right: 16,
+  },
+
+  eyeText: {
+    fontSize: 18,
   },
 });

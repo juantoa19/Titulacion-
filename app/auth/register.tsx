@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  Alert, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
   ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
@@ -15,13 +15,17 @@ import {
   ScrollView
 } from 'react-native';
 // 1. Importar el tipo RegisterData
-import { useAuth, RegisterData } from '../context/_AuthContext'; 
+import { useAuth, RegisterData } from '../context/_AuthContext';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   // 2. CAMBIADO: 'name' a 'nombre1' para que coincida con el formulario
   const [nombre1, setNombre1] = useState('');
   const [nombre2, setNombre2] = useState('');
@@ -45,7 +49,7 @@ export default function RegisterScreen() {
     confirmPassword: false,
     direccion: false
   });
-  
+
   const { register } = useAuth();
 
   // Animaciones (sin cambios)
@@ -90,7 +94,7 @@ export default function RegisterScreen() {
     }
 
     // 6. CORREGIDO: Mínimo 8 caracteres para coincidir con Laravel
-    if (password.length < 8) { 
+    if (password.length < 8) {
       Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres');
       return;
     }
@@ -101,7 +105,7 @@ export default function RegisterScreen() {
     }
 
     setLoading(true);
-    
+
     // 7. CORREGIDO: Construir el objeto formData completo
     const formData: RegisterData = {
       name: nombre1,
@@ -119,7 +123,7 @@ export default function RegisterScreen() {
     try {
       await register(formData); // Enviar el objeto completo
       Alert.alert(
-        '¡Cuenta creada!', 
+        '¡Cuenta creada!',
         'Tu cuenta ha sido creada exitosamente. Serás redirigido al Login.',
         [
           {
@@ -134,7 +138,7 @@ export default function RegisterScreen() {
         // 'errors' es { email: ["El email..."], password: [...] }
         const errors: Record<string, string[]> = error.response.data.errors;
         const errorMessages = Object.values(errors);
-        
+
         if (errorMessages.length > 0) {
           const firstErrorMessages = errorMessages[0];
           if (firstErrorMessages.length > 0) {
@@ -173,12 +177,12 @@ export default function RegisterScreen() {
   const isFormValid = email && password && confirmPassword && nombre1 && apellido1 && cedula && telefono && password === confirmPassword && password.length >= 8;
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView 
+        <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -186,7 +190,7 @@ export default function RegisterScreen() {
           <View style={styles.inner}>
             {/* Header */}
             <View style={styles.header}>
-              <Animated.Text 
+              <Animated.Text
                 style={[
                   styles.title,
                   {
@@ -201,7 +205,7 @@ export default function RegisterScreen() {
               </Text>
             </View>
 
-            <Animated.View 
+            <Animated.View
               style={[
                 styles.formContainer,
                 {
@@ -219,7 +223,7 @@ export default function RegisterScreen() {
               <View style={styles.rowContainer}>
                 <View style={styles.halfInput}>
                   <Text style={styles.inputLabel}>Primer Nombre *</Text>
-                  <TextInput 
+                  <TextInput
                     style={[
                       styles.input,
                       isFocused.nombre1 && styles.inputFocused,
@@ -235,7 +239,7 @@ export default function RegisterScreen() {
                 </View>
                 <View style={styles.halfInput}>
                   <Text style={styles.inputLabel}>Segundo Nombre</Text>
-                  <TextInput 
+                  <TextInput
                     style={[
                       styles.input,
                       isFocused.nombre2 && styles.inputFocused,
@@ -255,7 +259,7 @@ export default function RegisterScreen() {
               <View style={styles.rowContainer}>
                 <View style={styles.halfInput}>
                   <Text style={styles.inputLabel}>Primer Apellido *</Text>
-                  <TextInput 
+                  <TextInput
                     style={[
                       styles.input,
                       isFocused.apellido1 && styles.inputFocused,
@@ -271,7 +275,7 @@ export default function RegisterScreen() {
                 </View>
                 <View style={styles.halfInput}>
                   <Text style={styles.inputLabel}>Segundo Apellido</Text>
-                  <TextInput 
+                  <TextInput
                     style={[
                       styles.input,
                       isFocused.apellido2 && styles.inputFocused,
@@ -291,7 +295,7 @@ export default function RegisterScreen() {
               <View style={styles.rowContainer}>
                 <View style={styles.halfInput}>
                   <Text style={styles.inputLabel}>Cédula *</Text>
-                  <TextInput 
+                  <TextInput
                     style={[
                       styles.input,
                       isFocused.cedula && styles.inputFocused,
@@ -308,7 +312,7 @@ export default function RegisterScreen() {
                 </View>
                 <View style={styles.halfInput}>
                   <Text style={styles.inputLabel}>Teléfono *</Text>
-                  <TextInput 
+                  <TextInput
                     style={[
                       styles.input,
                       isFocused.telefono && styles.inputFocused,
@@ -328,7 +332,7 @@ export default function RegisterScreen() {
               {/* Dirección */}
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Dirección (Opcional)</Text>
-                <TextInput 
+                <TextInput
                   style={[
                     styles.input,
                     isFocused.direccion && styles.inputFocused,
@@ -351,7 +355,7 @@ export default function RegisterScreen() {
               {/* Input de Email */}
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Correo electrónico *</Text>
-                <TextInput 
+                <TextInput
                   style={[
                     styles.input,
                     isFocused.email && styles.inputFocused,
@@ -371,20 +375,36 @@ export default function RegisterScreen() {
               {/* Input de Contraseña */}
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Contraseña *</Text>
-                <TextInput 
-                  style={[
-                    styles.input,
-                    isFocused.password && styles.inputFocused,
-                    password && password.length >= 8 && styles.inputValid,
-                    password && password.length < 8 && styles.inputError
-                  ]}
-                  placeholder="Mínimo 8 caracteres"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  onFocus={() => handleFocus('password')}
-                  onBlur={() => handleBlur('password')}
-                />
+
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.passwordInput,
+                      isFocused.password && styles.inputFocused,
+                      password && password.length >= 8 && styles.inputValid,
+                      password && password.length < 8 && styles.inputError
+                    ]}
+                    placeholder="Mínimo 8 caracteres"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    onFocus={() => handleFocus('password')}
+                    onBlur={() => handleBlur('password')}
+                  />
+
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    <Ionicons
+                      name={showPassword ? 'eye-off' : 'eye'}
+                      size={22}
+                      color={showPassword ? '#3b82f6' : '#64748b'}
+                    />
+                  </TouchableOpacity>
+                </View>
+
                 {password && password.length < 8 && (
                   <Text style={styles.errorText}>Mínimo 8 caracteres</Text>
                 )}
@@ -393,20 +413,36 @@ export default function RegisterScreen() {
               {/* Input de Confirmar Contraseña */}
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Confirmar Contraseña *</Text>
-                <TextInput 
-                  style={[
-                    styles.input,
-                    isFocused.confirmPassword && styles.inputFocused,
-                    confirmPassword && password === confirmPassword && styles.inputValid,
-                    confirmPassword && password !== confirmPassword && styles.inputError
-                  ]}
-                  placeholder="Repite tu contraseña"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry
-                  onFocus={() => handleFocus('confirmPassword')}
-                  onBlur={() => handleBlur('confirmPassword')}
-                />
+
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.passwordInput,
+                      isFocused.confirmPassword && styles.inputFocused,
+                      confirmPassword && password === confirmPassword && styles.inputValid,
+                      confirmPassword && password !== confirmPassword && styles.inputError
+                    ]}
+                    placeholder="Repite tu contraseña"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    onFocus={() => handleFocus('confirmPassword')}
+                    onBlur={() => handleBlur('confirmPassword')}
+                  />
+
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    <Ionicons
+                      name={showConfirmPassword ? 'eye-off' : 'eye'}
+                      size={22}
+                      color={showConfirmPassword ? '#3b82f6' : '#64748b'}
+                    />
+                  </TouchableOpacity>
+                </View>
+
                 {confirmPassword && password !== confirmPassword && (
                   <Text style={styles.errorText}>Las contraseñas no coinciden</Text>
                 )}
@@ -432,12 +468,12 @@ export default function RegisterScreen() {
               {/* 11. ELIMINADO: Selector de Rol */}
 
               {/* Botón de Registro */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   styles.button,
                   (!isFormValid || loading) && styles.buttonDisabled
-                ]} 
-                onPress={handleRegister} 
+                ]}
+                onPress={handleRegister}
                 disabled={!isFormValid || loading}
               >
                 {loading ? (
@@ -635,5 +671,20 @@ const styles = StyleSheet.create({
     color: '#3b82f6',
     fontWeight: '600',
     fontSize: 14,
+  },
+
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  passwordInput: {
+    flex: 1,
+    paddingRight: 48,
+  },
+
+  eyeButton: {
+    position: 'absolute',
+    right: 16,
   },
 });
