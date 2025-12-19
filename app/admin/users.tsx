@@ -166,7 +166,7 @@ export default function UsersManagement() {
             {/* 1. Botón para ADMINISTRADORES: Bajar a Técnico */}
             {isAdmin && (
                <TouchableOpacity 
-                 style={[styles.actionButton, { backgroundColor: '#3b82f6' }]}
+                 style={[styles.actionButton, { backgroundColor: '#10518b' }]}
                  onPress={() => changeRole(item.id, 'tecnico', 'degradar a TÉCNICO')}
                >
                  <MaterialCommunityIcons name="arrow-down-bold" size={20} color="white" />
@@ -176,7 +176,7 @@ export default function UsersManagement() {
             {/* 2. Botón para NO ADMINS: Subir a Admin */}
             {!isAdmin && (
               <TouchableOpacity 
-                style={[styles.actionButton, { backgroundColor: '#eab308' }]}
+                style={[styles.actionButton, { backgroundColor: '#ffdf2b' }]}
                 onPress={() => changeRole(item.id, 'admin', 'ascender a ADMINISTRADOR')}
               >
                 <MaterialCommunityIcons name="crown" size={20} color="white" />
@@ -410,10 +410,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   btnPromote: {
-    backgroundColor: '#3b82f6', // Azul para promover
+    backgroundColor: '#10518b', // Azul para promover
   },
   btnRevoke: {
-    backgroundColor: '#ef4444', // Rojo para quitar
+    backgroundColor: '#66cccc', // Rojo para quitar
   },
   btnText: {
     color: 'white',

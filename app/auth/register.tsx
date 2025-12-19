@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
   TextInput, 
   TouchableOpacity, 
-  StyleSheet, 
   Alert, 
   ActivityIndicator,
   Animated,
@@ -12,17 +11,22 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  ScrollView
+  ScrollView,
+  Dimensions,
+  Easing
 } from 'react-native';
-// 1. Importar el tipo RegisterData
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import registerStyles from './styles/register.styles';
 import { useAuth, RegisterData } from '../context/_AuthContext'; 
 import { router } from 'expo-router';
+
+const { width } = Dimensions.get('window');
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  // 2. CAMBIADO: 'name' a 'nombre1' para que coincida con el formulario
   const [nombre1, setNombre1] = useState('');
   const [nombre2, setNombre2] = useState('');
   const [apellido1, setApellido1] = useState('');
@@ -30,10 +34,8 @@ export default function RegisterScreen() {
   const [cedula, setCedula] = useState('');
   const [telefono, setTelefono] = useState('');
   const [direccion, setDireccion] = useState('');
-  // 3. ELIMINADO: 'selectedRole'
   const [loading, setLoading] = useState(false);
   const [isFocused, setIsFocused] = useState({
-    // 4. CAMBIADO: 'name' a 'nombre1'
     nombre1: false,
     nombre2: false,
     apellido1: false,
@@ -48,37 +50,78 @@ export default function RegisterScreen() {
   
   const { register } = useAuth();
 
-  // Animaciones (sin cambios)
+  // Animaciones avanzadas
   const titleAnim = React.useRef(new Animated.Value(0)).current;
   const formAnim = React.useRef(new Animated.Value(0)).current;
+  const logoRotate = React.useRef(new Animated.Value(0)).current;
+  const buttonShineAnim = React.useRef(new Animated.Value(0)).current;
+  const floatingAnim1 = React.useRef(new Animated.Value(0)).current;
+  const floatingAnim2 = React.useRef(new Animated.Value(0)).current;
 
-  React.useEffect(() => {
+  useEffect(() => {
+    // Animación del logo giratorio
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(logoRotate, {
+          toValue: 1,
+          duration: 25000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Animación del brillo del botón
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(buttonShineAnim, {
+          toValue: 1,
+          duration: 2500,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Animaciones flotantes
     Animated.parallel([
       Animated.spring(titleAnim, {
         toValue: 1,
-        tension: 20,
-        friction: 8,
+        tension: 60,
+        friction: 6,
         useNativeDriver: true,
       }),
       Animated.spring(formAnim, {
         toValue: 1,
-        tension: 20,
-        friction: 8,
+        tension: 50,
+        friction: 7,
+        delay: 400,
+        useNativeDriver: true,
+      }),
+      Animated.spring(floatingAnim1, {
+        toValue: 1,
+        tension: 45,
+        friction: 6,
         delay: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(floatingAnim2, {
+        toValue: 1,
+        tension: 45,
+        friction: 6,
+        delay: 300,
         useNativeDriver: true,
       })
     ]).start();
   }, []);
 
-  // Nueva función para manejar solo inputs numéricos
+  // Función para inputs numéricos
   const handleNumericChange = (setter: React.Dispatch<React.SetStateAction<string>>, value: string) => {
-    // Reemplaza cualquier caracter que NO sea un número con una cadena vacía
     const numericValue = value.replace(/[^0-9]/g, '');
     setter(numericValue);
   };
 
   const handleRegister = async () => {
-    // 5. CORREGIDO: Comprobar campos obligatorios correctos
     if (!email || !password || !confirmPassword || !nombre1 || !apellido1 || !cedula || !telefono) {
       Alert.alert('Error', 'Por favor completa todos los campos obligatorios (*)');
       return;
@@ -89,7 +132,6 @@ export default function RegisterScreen() {
       return;
     }
 
-    // 6. CORREGIDO: Mínimo 8 caracteres para coincidir con Laravel
     if (password.length < 8) { 
       Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres');
       return;
@@ -102,7 +144,6 @@ export default function RegisterScreen() {
 
     setLoading(true);
     
-    // 7. CORREGIDO: Construir el objeto formData completo
     const formData: RegisterData = {
       name: nombre1,
       nombre2: nombre2 || null,
@@ -117,21 +158,19 @@ export default function RegisterScreen() {
     };
 
     try {
-      await register(formData); // Enviar el objeto completo
+      await register(formData);
       Alert.alert(
-        '¡Cuenta creada!', 
-        'Tu cuenta ha sido creada exitosamente. Serás redirigido al Login.',
+        '🎉 ¡Cuenta Creada!', 
+        'Tu cuenta ha sido creada exitosamente. Redirigiendo al Login...',
         [
           {
-            text: 'OK',
+            text: 'Continuar',
             onPress: () => router.replace('/auth/login')
           }
         ]
       );
     } catch (error: any) {
-      // 8. CORREGIDO: Manejo de error de validación (firstError: unknown)
       if (error.response && error.response.data && error.response.data.errors) {
-        // 'errors' es { email: ["El email..."], password: [...] }
         const errors: Record<string, string[]> = error.response.data.errors;
         const errorMessages = Object.values(errors);
         
@@ -161,203 +200,373 @@ export default function RegisterScreen() {
 
   const titleScale = titleAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.8, 1]
+    outputRange: [0.7, 1]
   });
 
   const formTranslateY = formAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [50, 0]
+    outputRange: [100, 0]
   });
 
-  // 9. CORREGIDO: 'isFormValid' usa los campos correctos
+  const logoRotation = logoRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  });
+
+  const buttonShinePosition = buttonShineAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-100, width + 100]
+  });
+
+  const floatingTranslateY1 = floatingAnim1.interpolate({
+    inputRange: [0, 1],
+    outputRange: [80, 0]
+  });
+
+  const floatingTranslateY2 = floatingAnim2.interpolate({
+    inputRange: [0, 1],
+    outputRange: [100, 0]
+  });
+
+  // Calcular progreso del formulario
+  const personalInfoComplete = nombre1 && apellido1 && cedula && telefono;
+  const accountInfoComplete = email && password && confirmPassword && password.length >= 8 && password === confirmPassword;
+  const progress = (personalInfoComplete ? 50 : 25) + (accountInfoComplete ? 50 : 25);
+
   const isFormValid = email && password && confirmPassword && nombre1 && apellido1 && cedula && telefono && password === confirmPassword && password.length >= 8;
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container}
+      style={registerStyles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* Fondo con gradiente */}
+      <LinearGradient
+        colors={['#ffffff', '#f8fafc', '#e0f7ff']}
+        style={registerStyles.background}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+
+      {/* Elementos flotantes animados */}
+      <View style={registerStyles.floatingElements}>
+        <Animated.View 
+          style={[
+            registerStyles.floatingShape1,
+            { transform: [{ translateY: floatingTranslateY1 }] }
+          ]} 
+        />
+        <Animated.View 
+          style={[
+            registerStyles.floatingShape2,
+            { transform: [{ translateY: floatingTranslateY2 }] }
+          ]} 
+        />
+      </View>
+
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          style={registerStyles.scrollView}
+          contentContainerStyle={registerStyles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.inner}>
+          <View style={registerStyles.inner}>
             {/* Header */}
-            <View style={styles.header}>
-              <Animated.Text 
+            <View style={registerStyles.header}>
+              {/* Logo animado giratorio */}
+              <Animated.View 
                 style={[
-                  styles.title,
-                  {
-                    transform: [{ scale: titleScale }]
+                  registerStyles.logoContainer,
+                  { transform: [{ rotate: logoRotation }] }
+                ]}
+              >
+                <View style={registerStyles.logoInner}>
+                  <Ionicons name="person-add" size={32} color="#ffffff" style={{ transform: [{ rotate: '-45deg' }] }} />
+                </View>
+              </Animated.View>
+
+              <Animated.Text
+                style={[
+                  registerStyles.title,
+                  { 
+                    transform: [{ scale: titleScale }],
+                    opacity: titleAnim 
                   }
                 ]}
               >
-                Crear Cuenta
+                Únete a Nosotros
               </Animated.Text>
-              <Text style={styles.subtitle}>
-                Regístrate para comenzar
+              <Text style={registerStyles.subtitle}>
+                Crea tu cuenta y comienza tu experiencia
               </Text>
+            </View>
+
+            {/* Indicador de progreso */}
+            <View style={registerStyles.progressContainer}>
+              <View style={[
+                registerStyles.stepIndicator,
+                nombre1 && apellido1 ? registerStyles.stepIndicatorCompleted : registerStyles.stepIndicatorActive
+              ]}>
+                <Text style={registerStyles.stepNumber}>1</Text>
+              </View>
+              <View style={[
+                registerStyles.progressStep,
+                nombre1 && apellido1 ? registerStyles.progressStepCompleted : registerStyles.progressStepActive
+              ]} />
+              <View style={[
+                registerStyles.stepIndicator,
+                accountInfoComplete ? registerStyles.stepIndicatorCompleted : 
+                (personalInfoComplete ? registerStyles.stepIndicatorActive : {})
+              ]}>
+                <Text style={registerStyles.stepNumber}>2</Text>
+              </View>
+              <View style={[
+                registerStyles.progressStep,
+                accountInfoComplete ? registerStyles.progressStepCompleted : 
+                (personalInfoComplete ? registerStyles.progressStepActive : {})
+              ]} />
+              <View style={[
+                registerStyles.stepIndicator,
+                isFormValid ? registerStyles.stepIndicatorCompleted : 
+                (accountInfoComplete ? registerStyles.stepIndicatorActive : {})
+              ]}>
+                <Text style={registerStyles.stepNumber}>3</Text>
+              </View>
             </View>
 
             <Animated.View 
               style={[
-                styles.formContainer,
-                {
-                  transform: [{ translateY: formTranslateY }]
+                registerStyles.formContainer,
+                { 
+                  transform: [{ translateY: formTranslateY }],
+                  opacity: formAnim 
                 }
               ]}
             >
 
               {/* Información Personal */}
-              <View style={styles.sectionTitle}>
-                <Text style={styles.sectionLabel}>Información Personal</Text>
+              <View style={registerStyles.sectionTitle}>
+                <Text style={registerStyles.sectionLabel}>
+                  <Ionicons name="person-circle-outline" size={20} color="#10518b" /> 
+                  {' '}Información Personal
+                </Text>
               </View>
 
               {/* Nombres */}
-              <View style={styles.rowContainer}>
-                <View style={styles.halfInput}>
-                  <Text style={styles.inputLabel}>Primer Nombre *</Text>
+              <View style={registerStyles.rowContainer}>
+                <View style={registerStyles.halfInput}>
+                  <Text style={registerStyles.inputLabel}>
+                    <Ionicons name="person" size={16} color="#10518b" /> 
+                    {' '}Primer Nombre<Text style={registerStyles.requiredStar}> *</Text>
+                  </Text>
+                  <View style={registerStyles.inputIconContainer}>
+                    <Ionicons name="person" size={22} color="#5faeee" />
+                  </View>
                   <TextInput 
                     style={[
-                      styles.input,
-                      isFocused.nombre1 && styles.inputFocused,
-                      nombre1 && styles.inputValid
+                      registerStyles.input,
+                      isFocused.nombre1 && registerStyles.inputFocused,
+                      nombre1 && registerStyles.inputValid
                     ]}
-                    placeholder="Primer nombre"
+                    placeholder=""
+                    placeholderTextColor="#94a3b8"
                     value={nombre1}
                     onChangeText={setNombre1}
                     onFocus={() => handleFocus('nombre1')}
                     onBlur={() => handleBlur('nombre1')}
                     maxLength={50}
+                    editable={!loading}
                   />
                 </View>
-                <View style={styles.halfInput}>
-                  <Text style={styles.inputLabel}>Segundo Nombre</Text>
+                <View style={registerStyles.halfInput}>
+                  <Text style={registerStyles.inputLabel}>
+                    Segundo Nombre
+                  </Text>
+                  <View style={registerStyles.inputIconContainer}>
+                    <Ionicons name="person-outline" size={22} color="#94a3b8" />
+                  </View>
                   <TextInput 
                     style={[
-                      styles.input,
-                      isFocused.nombre2 && styles.inputFocused,
-                      nombre2 && styles.inputValid
+                      registerStyles.input,
+                      isFocused.nombre2 && registerStyles.inputFocused,
+                      nombre2 && registerStyles.inputValid
                     ]}
-                    placeholder="Segundo nombre"
+                    placeholder=""
+                    placeholderTextColor="#94a3b8"
                     value={nombre2}
                     onChangeText={setNombre2}
                     onFocus={() => handleFocus('nombre2')}
                     onBlur={() => handleBlur('nombre2')}
                     maxLength={50}
+                    editable={!loading}
                   />
                 </View>
               </View>
 
               {/* Apellidos */}
-              <View style={styles.rowContainer}>
-                <View style={styles.halfInput}>
-                  <Text style={styles.inputLabel}>Primer Apellido *</Text>
+              <View style={registerStyles.rowContainer}>
+                <View style={registerStyles.halfInput}>
+                  <Text style={registerStyles.inputLabel}>
+                    <Ionicons name="people" size={16} color="#10518b" /> 
+                    {' '}Primer Apellido<Text style={registerStyles.requiredStar}> *</Text>
+                  </Text>
+                  <View style={registerStyles.inputIconContainer}>
+                    <Ionicons name="people" size={22} color="#5faeee" />
+                  </View>
                   <TextInput 
                     style={[
-                      styles.input,
-                      isFocused.apellido1 && styles.inputFocused,
-                      apellido1 && styles.inputValid
+                      registerStyles.input,
+                      isFocused.apellido1 && registerStyles.inputFocused,
+                      apellido1 && registerStyles.inputValid
                     ]}
-                    placeholder="Primer apellido"
+                    placeholder=""
+                    placeholderTextColor="#94a3b8"
                     value={apellido1}
                     onChangeText={setApellido1}
                     onFocus={() => handleFocus('apellido1')}
                     onBlur={() => handleBlur('apellido1')}
                     maxLength={50}
+                    editable={!loading}
                   />
                 </View>
-                <View style={styles.halfInput}>
-                  <Text style={styles.inputLabel}>Segundo Apellido</Text>
+                <View style={registerStyles.halfInput}>
+                  <Text style={registerStyles.inputLabel}>
+                    Segundo Apellido
+                  </Text>
+                  <View style={registerStyles.inputIconContainer}>
+                    <Ionicons name="people-outline" size={22} color="#94a3b8" />
+                  </View>
                   <TextInput 
                     style={[
-                      styles.input,
-                      isFocused.apellido2 && styles.inputFocused,
-                      apellido2 && styles.inputValid
+                      registerStyles.input,
+                      isFocused.apellido2 && registerStyles.inputFocused,
+                      apellido2 && registerStyles.inputValid
                     ]}
-                    placeholder="Segundo apellido"
+                    placeholder=""
+                    placeholderTextColor="#94a3b8"
                     value={apellido2}
                     onChangeText={setApellido2}
                     onFocus={() => handleFocus('apellido2')}
                     onBlur={() => handleBlur('apellido2')}
                     maxLength={50}
+                    editable={!loading}
                   />
                 </View>
               </View>
 
               {/* Cédula y Teléfono */}
-              <View style={styles.rowContainer}>
-                <View style={styles.halfInput}>
-                  <Text style={styles.inputLabel}>Cédula *</Text>
+              <View style={registerStyles.rowContainer}>
+                <View style={registerStyles.halfInput}>
+                  <Text style={registerStyles.inputLabel}>
+                    <Ionicons name="card" size={16} color="#10518b" /> 
+                    {' '}Cédula<Text style={registerStyles.requiredStar}> *</Text>
+                  </Text>
+                  <View style={registerStyles.inputIconContainer}>
+                    <Ionicons name="card" size={22} color="#5faeee" />
+                  </View>
                   <TextInput 
                     style={[
-                      styles.input,
-                      isFocused.cedula && styles.inputFocused,
-                      cedula && styles.inputValid
+                      registerStyles.input,
+                      isFocused.cedula && registerStyles.inputFocused,
+                      cedula && cedula.length === 10 ? registerStyles.inputValid : 
+                      cedula ? registerStyles.inputError : {}
                     ]}
-                    placeholder="Número de cédula"
+                    placeholder=""
+                    placeholderTextColor="#94a3b8"
                     value={cedula}
                     onChangeText={(text) => handleNumericChange(setCedula, text)}
                     keyboardType="numeric"
                     onFocus={() => handleFocus('cedula')}
                     onBlur={() => handleBlur('cedula')}
                     maxLength={10}
+                    editable={!loading}
                   />
+                  {cedula && cedula.length !== 10 && (
+                    <Text style={registerStyles.errorText}>Debe tener 10 dígitos</Text>
+                  )}
                 </View>
-                <View style={styles.halfInput}>
-                  <Text style={styles.inputLabel}>Teléfono *</Text>
+                <View style={registerStyles.halfInput}>
+                  <Text style={registerStyles.inputLabel}>
+                    <Ionicons name="call" size={16} color="#10518b" /> 
+                    {' '}Teléfono<Text style={registerStyles.requiredStar}> *</Text>
+                  </Text>
+                  <View style={registerStyles.inputIconContainer}>
+                    <Ionicons name="call" size={22} color="#5faeee" />
+                  </View>
                   <TextInput 
                     style={[
-                      styles.input,
-                      isFocused.telefono && styles.inputFocused,
-                      telefono && styles.inputValid
+                      registerStyles.input,
+                      isFocused.telefono && registerStyles.inputFocused,
+                      telefono && telefono.length === 10 ? registerStyles.inputValid : 
+                      telefono ? registerStyles.inputError : {}
                     ]}
-                    placeholder="Teléfono"
+                    placeholder=""
+                    placeholderTextColor="#94a3b8"
                     value={telefono}
                     onChangeText={(text) => handleNumericChange(setTelefono, text)}
                     keyboardType="phone-pad"
                     onFocus={() => handleFocus('telefono')}
                     onBlur={() => handleBlur('telefono')}
                     maxLength={10}
+                    editable={!loading}
                   />
+                  {telefono && telefono.length !== 10 && (
+                    <Text style={registerStyles.errorText}>Debe tener 10 dígitos</Text>
+                  )}
                 </View>
               </View>
 
               {/* Dirección */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Dirección (Opcional)</Text>
+              <View style={registerStyles.inputContainer}>
+                <Text style={registerStyles.inputLabel}>
+                  <Ionicons name="location" size={16} color="#10518b" /> 
+                  {' '}Dirección (Opcional)
+                </Text>
+                <View style={registerStyles.inputIconContainer}>
+                  <Ionicons name="location-outline" size={22} color="#94a3b8" />
+                </View>
                 <TextInput 
                   style={[
-                    styles.input,
-                    isFocused.direccion && styles.inputFocused,
-                    direccion && styles.inputValid
+                    registerStyles.input,
+                    isFocused.direccion && registerStyles.inputFocused,
+                    direccion && registerStyles.inputValid
                   ]}
-                  placeholder="Tu dirección completa"
+                  placeholder=""
+                  placeholderTextColor="#94a3b8"
                   value={direccion}
                   onChangeText={setDireccion}
                   onFocus={() => handleFocus('direccion')}
                   onBlur={() => handleBlur('direccion')}
                   maxLength={255}
+                  editable={!loading}
                 />
               </View>
 
               {/* Separador */}
-              <View style={styles.sectionTitle}>
-                <Text style={styles.sectionLabel}>Información de Cuenta</Text>
+              <View style={registerStyles.sectionTitle}>
+                <Text style={registerStyles.sectionLabel}>
+                  <Ionicons name="lock-closed" size={20} color="#10518b" /> 
+                  {' '}Información de Cuenta
+                </Text>
               </View>
 
               {/* Input de Email */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Correo electrónico *</Text>
+              <View style={registerStyles.inputContainer}>
+                <Text style={registerStyles.inputLabel}>
+                  <Ionicons name="mail" size={16} color="#10518b" /> 
+                  {' '}Correo electrónico<Text style={registerStyles.requiredStar}> *</Text>
+                </Text>
+                <View style={registerStyles.inputIconContainer}>
+                  <Ionicons name="mail" size={22} color="#5faeee" />
+                </View>
                 <TextInput 
                   style={[
-                    styles.input,
-                    isFocused.email && styles.inputFocused,
-                    email && styles.inputValid
+                    registerStyles.input,
+                    isFocused.email && registerStyles.inputFocused,
+                    email && registerStyles.inputValid
                   ]}
-                  placeholder="tu@email.com"
+                  placeholder=""
+                  placeholderTextColor="#94a3b8"
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -365,93 +574,164 @@ export default function RegisterScreen() {
                   onFocus={() => handleFocus('email')}
                   onBlur={() => handleBlur('email')}
                   maxLength={254}
+                  editable={!loading}
                 />
               </View>
 
               {/* Input de Contraseña */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Contraseña *</Text>
+              <View style={registerStyles.inputContainer}>
+                <Text style={registerStyles.inputLabel}>
+                  <Ionicons name="key" size={16} color="#10518b" /> 
+                  {' '}Contraseña<Text style={registerStyles.requiredStar}> *</Text>
+                </Text>
+                <View style={registerStyles.inputIconContainer}>
+                  <Ionicons name="key" size={22} color="#5faeee" />
+                </View>
                 <TextInput 
                   style={[
-                    styles.input,
-                    isFocused.password && styles.inputFocused,
-                    password && password.length >= 8 && styles.inputValid,
-                    password && password.length < 8 && styles.inputError
+                    registerStyles.input,
+                    isFocused.password && registerStyles.inputFocused,
+                    password && password.length >= 8 ? registerStyles.inputValid : 
+                    password ? registerStyles.inputError : {}
                   ]}
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder=""
+                  placeholderTextColor="#94a3b8"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
                   onFocus={() => handleFocus('password')}
                   onBlur={() => handleBlur('password')}
+                  editable={!loading}
                 />
                 {password && password.length < 8 && (
-                  <Text style={styles.errorText}>Mínimo 8 caracteres</Text>
+                  <Text style={registerStyles.errorText}>Mínimo 8 caracteres requeridos</Text>
                 )}
               </View>
 
               {/* Input de Confirmar Contraseña */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Confirmar Contraseña *</Text>
+              <View style={registerStyles.inputContainer}>
+                <Text style={registerStyles.inputLabel}>
+                  <Ionicons name="key-outline" size={16} color="#10518b" /> 
+                  {' '}Confirmar Contraseña<Text style={registerStyles.requiredStar}> *</Text>
+                </Text>
+                <View style={registerStyles.inputIconContainer}>
+                  <Ionicons name="key-outline" size={22} color="#5faeee" />
+                </View>
                 <TextInput 
                   style={[
-                    styles.input,
-                    isFocused.confirmPassword && styles.inputFocused,
-                    confirmPassword && password === confirmPassword && styles.inputValid,
-                    confirmPassword && password !== confirmPassword && styles.inputError
+                    registerStyles.input,
+                    isFocused.confirmPassword && registerStyles.inputFocused,
+                    confirmPassword && password === confirmPassword ? registerStyles.inputValid : 
+                    confirmPassword ? registerStyles.inputError : {}
                   ]}
-                  placeholder="Repite tu contraseña"
+                  placeholder=""
+                  placeholderTextColor="#94a3b8"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry
                   onFocus={() => handleFocus('confirmPassword')}
                   onBlur={() => handleBlur('confirmPassword')}
+                  editable={!loading}
                 />
                 {confirmPassword && password !== confirmPassword && (
-                  <Text style={styles.errorText}>Las contraseñas no coinciden</Text>
+                  <Text style={registerStyles.errorText}>Las contraseñas no coinciden</Text>
                 )}
               </View>
 
               {/* Requisitos de contraseña */}
-              <View style={styles.passwordRequirements}>
-                <Text style={styles.requirementsTitle}>La contraseña debe:</Text>
-                <Text style={[
-                  styles.requirementText,
-                  password.length >= 8 ? styles.requirementMet : styles.requirementUnmet
-                ]}>
-                  ✓ Tener al menos 8 caracteres
+              <View style={registerStyles.passwordRequirements}>
+                <Text style={registerStyles.requirementsTitle}>
+                  <Ionicons name="shield-checkmark" size={16} color="#10518b" /> 
+                  {' '}Requisitos de Seguridad:
                 </Text>
                 <Text style={[
-                  styles.requirementText,
-                  password === confirmPassword && confirmPassword ? styles.requirementMet : styles.requirementUnmet
+                  registerStyles.requirementText,
+                  password.length >= 8 ? registerStyles.requirementMet : registerStyles.requirementUnmet
                 ]}>
-                  ✓ Coincidir con la confirmación
+                  {password.length >= 8 ? '✓' : '○'} Mínimo 8 caracteres
+                </Text>
+                <Text style={[
+                  registerStyles.requirementText,
+                  password === confirmPassword && confirmPassword ? registerStyles.requirementMet : registerStyles.requirementUnmet
+                ]}>
+                  {password === confirmPassword && confirmPassword ? '✓' : '○'} Las contraseñas coinciden
+                </Text>
+                <Text style={[
+                  registerStyles.requirementText,
+                  cedula.length === 10 ? registerStyles.requirementMet : registerStyles.requirementUnmet
+                ]}>
+                  {cedula.length === 10 ? '✓' : '○'} Cédula válida (10 dígitos)
+                </Text>
+                <Text style={[
+                  registerStyles.requirementText,
+                  telefono.length === 10 ? registerStyles.requirementMet : registerStyles.requirementUnmet
+                ]}>
+                  {telefono.length === 10 ? '✓' : '○'} Teléfono válido (10 dígitos)
                 </Text>
               </View>
 
-              {/* 11. ELIMINADO: Selector de Rol */}
-
-              {/* Botón de Registro */}
+              {/* Botón de Registro con efectos */}
               <TouchableOpacity 
                 style={[
-                  styles.button,
-                  (!isFormValid || loading) && styles.buttonDisabled
+                  registerStyles.button,
+                  (!isFormValid || loading) && registerStyles.buttonDisabled
                 ]} 
                 onPress={handleRegister} 
                 disabled={!isFormValid || loading}
+                activeOpacity={0.7}
               >
+                <LinearGradient
+                  colors={isFormValid ? ['#5faeee', '#3b8fd9', '#10518b'] : ['#cbd5e1', '#94a3b8']}
+                  style={registerStyles.buttonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                />
+                
+                {/* Efecto shine animado */}
+                {isFormValid && !loading && (
+                  <Animated.View 
+                    style={[
+                      registerStyles.buttonShine,
+                      { transform: [{ translateX: buttonShinePosition }] }
+                    ]} 
+                  />
+                )}
+                
                 {loading ? (
-                  <ActivityIndicator color="#ffffff" />
+                  <ActivityIndicator color="#ffffff" size="large" />
                 ) : (
-                  <Text style={styles.buttonText}>Crear Cuenta</Text>
+                  <Text style={registerStyles.buttonText}>
+                    <Ionicons name="checkmark-circle" size={22} color="#ffffff" /> 
+                    {'  '}CREAR MI CUENTA
+                  </Text>
                 )}
               </TouchableOpacity>
 
               {/* Link de login */}
-              <View style={styles.loginContainer}>
-                <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
-                <TouchableOpacity onPress={() => router.back()}>
-                  <Text style={styles.loginLink}>Inicia Sesión</Text>
+              <View style={registerStyles.loginContainer}>
+                <Text style={registerStyles.loginText}>
+                  ¿Ya tienes una cuenta?
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => router.back()}
+                  disabled={loading}
+                  activeOpacity={0.6}
+                >
+                  <LinearGradient
+                    colors={['rgba(16, 81, 139, 0.1)', 'rgba(95, 174, 238, 0.2)']}
+                    style={registerStyles.loginLink}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Text style={{
+                      color: '#10518b',
+                      fontWeight: '800',
+                      fontSize: 15,
+                    }}>
+                      <Ionicons name="log-in" size={15} /> 
+                      {' '}Iniciar Sesión
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
               </View>
             </Animated.View>
@@ -461,179 +741,3 @@ export default function RegisterScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-// 12. CORREGIDO: Eliminados los estilos del selector de rol
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  rowContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  halfInput: {
-    flex: 1,
-  },
-  sectionTitle: {
-    marginBottom: 12,
-    marginTop: 12,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  inner: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#1e293b',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#64748b',
-  },
-  formContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
-    fontSize: 16,
-    color: '#0f172a',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  inputFocused: {
-    borderColor: '#3b82f6',
-    shadowColor: '#3b82f6',
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  inputValid: {
-    borderColor: '#10b981',
-  },
-  inputError: {
-    borderColor: '#ef4444',
-  },
-  errorText: {
-    color: '#ef4444',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
-  },
-  passwordRequirements: {
-    marginTop: 8,
-    marginBottom: 20,
-    padding: 12,
-    backgroundColor: '#f8fafc',
-    borderRadius: 8,
-  },
-  requirementsTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 6,
-  },
-  requirementText: {
-    fontSize: 11,
-    marginBottom: 2,
-  },
-  requirementMet: {
-    color: '#10b981',
-  },
-  requirementUnmet: {
-    color: '#94a3b8',
-  },
-  button: {
-    backgroundColor: '#10b981',
-    padding: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: '#10b981',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  buttonDisabled: {
-    backgroundColor: '#cbd5e1',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  loginText: {
-    color: '#64748b',
-    fontSize: 14,
-  },
-  loginLink: {
-    color: '#3b82f6',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-});

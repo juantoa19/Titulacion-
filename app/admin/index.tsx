@@ -1,73 +1,97 @@
 // app/admin/index.tsx
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/_AuthContext';
+import adminStyles from './styles/admin.styles';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Panel de Administrador</Text>
-      <Text style={styles.subtitle}>Hola, {user?.name || 'Admin'}</Text>
+    <ScrollView style={adminStyles.container}>
+      {/* Header con gradiente */}
+      <View style={adminStyles.header}>
+        <Text style={adminStyles.title}>Panel de Administrador</Text>
+        <Text style={adminStyles.subtitle}>Hola, {user?.name || 'Admin'} 👋</Text>
+      </View>
 
-      <View style={styles.menuContainer}>
+      <View style={adminStyles.menuContainer}>
         {/* 1. Gestión de Usuarios */}
         <TouchableOpacity 
-          style={styles.card} 
+          style={[adminStyles.card, adminStyles.cardUsers]} 
           onPress={() => router.push('/admin/users' as any)}
+          activeOpacity={0.8}
         >
-          <Text style={styles.cardTitle}>👥 Gestionar Usuarios</Text>
-          <Text style={styles.cardDesc}>Crear cuentas y asignar roles</Text>
+          <View style={adminStyles.cardIconContainer}>
+            <Text style={adminStyles.cardIcon}>👥</Text>
+          </View>
+          <View style={adminStyles.cardContent}>
+            <Text style={adminStyles.cardTitle}>Gestión de Usuarios</Text>
+            <Text style={adminStyles.cardDesc}>Crear cuentas y asignar roles</Text>
+          </View>
+          <Text style={adminStyles.cardArrow}>→</Text>
         </TouchableOpacity>
 
-        {/* 2. (NUEVO) Reasignación de Tickets */}
+        {/* 2. Reasignación de Tickets */}
         <TouchableOpacity 
-          style={styles.card} 
+          style={[adminStyles.card, adminStyles.cardAssignments]} 
           onPress={() => router.push('/admin/assignments' as any)}
+          activeOpacity={0.8}
         >
-          <Text style={styles.cardTitle}>🔄 Reasignar Tickets</Text>
-          <Text style={styles.cardDesc}>Mover casos entre técnicos</Text>
+          <View style={adminStyles.cardIconContainer}>
+            <Text style={adminStyles.cardIcon}>🔄</Text>
+          </View>
+          <View style={adminStyles.cardContent}>
+            <Text style={adminStyles.cardTitle}>Reasignar Tickets</Text>
+            <Text style={adminStyles.cardDesc}>Mover casos entre técnicos</Text>
+          </View>
+          <Text style={adminStyles.cardArrow}>→</Text>
         </TouchableOpacity>
 
         {/* 3. Reportes */}
         <TouchableOpacity 
-          style={styles.card} 
+          style={[adminStyles.card, adminStyles.cardReports]} 
           onPress={() => router.push('/admin/reports' as any)}
+          activeOpacity={0.8}
         >
-          <Text style={styles.cardTitle}>📊 Reportes y PDF</Text>
-          <Text style={styles.cardDesc}>Estadísticas y descargas</Text>
+          <View style={adminStyles.cardIconContainer}>
+            <Text style={adminStyles.cardIcon}>📊</Text>
+          </View>
+          <View style={adminStyles.cardContent}>
+            <Text style={adminStyles.cardTitle}>Reportes y PDF</Text>
+            <Text style={adminStyles.cardDesc}>Estadísticas y descargas</Text>
+          </View>
+          <Text style={adminStyles.cardArrow}>→</Text>
         </TouchableOpacity>
+
+        {/* 4. Estadísticas Rápidas (Nueva funcionalidad visual) */}
+        <View style={adminStyles.statsContainer}>
+          <View style={adminStyles.statItem}>
+            <Text style={adminStyles.statNumber}>42</Text>
+            <Text style={adminStyles.statLabel}>Tickets activos</Text>
+          </View>
+          <View style={adminStyles.statDivider} />
+          <View style={adminStyles.statItem}>
+            <Text style={adminStyles.statNumber}>18</Text>
+            <Text style={adminStyles.statLabel}>Técnicos</Text>
+          </View>
+          <View style={adminStyles.statDivider} />
+          <View style={adminStyles.statItem}>
+            <Text style={adminStyles.statNumber}>7</Text>
+            <Text style={adminStyles.statLabel}>Urgentes</Text>
+          </View>
+        </View>
       </View>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-        <Text style={styles.logoutText}>Cerrar Sesión</Text>
+      <TouchableOpacity 
+        style={adminStyles.logoutButton} 
+        onPress={logout}
+        activeOpacity={0.7}
+      >
+        <Text style={adminStyles.logoutText}>Cerrar Sesión</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
-
-// ... (Los estilos se mantienen igual, el código de arriba es el render)
-// Asegúrate de copiar los estilos del archivo original si los necesitas
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#333', marginBottom: 5 },
-  subtitle: { fontSize: 16, color: '#666', marginBottom: 30 },
-  menuContainer: { gap: 15 },
-  card: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 12,
-    elevation: 2, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#007AFF', marginBottom: 5 },
-  cardDesc: { color: '#666' },
-  logoutButton: { marginTop: 40, alignSelf: 'center', padding: 10 },
-  logoutText: { color: 'red', fontSize: 16, fontWeight: '600' },
-});

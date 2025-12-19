@@ -1,35 +1,31 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Alert, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { apiFetch, API_URL, TOKEN_KEY } from '../services/api'; 
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import reportsStyles from './styles/reports.styles';
 
 export default function ReportsScreen() {
   const [startDate, setStartDate] = useState('2025-01-01');
   const [endDate, setEndDate] = useState('2025-12-31');
-  
-  // Nuevo estado para el filtro
   const [selectedStatus, setSelectedStatus] = useState(''); // '' = Todos
-
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  // Lista de estados disponibles
   const statuses = [
-    { label: 'Todos', value: '' },
-    { label: 'Pendiente', value: 'pendiente' },
-    { label: 'En Revisión', value: 'en_revision' },
-    { label: 'Reparado', value: 'reparado' },
-    { label: 'Cerrado', value: 'cerrado' },
+    { label: 'Todos', value: '', color: '#10518b' },
+    { label: 'Pendiente', value: 'pendiente', color: '#f59e0b' },
+    { label: 'En Revisión', value: 'en_revision', color: '#5faee3' },
+    { label: 'Reparado', value: 'reparado', color: '#10b981' },
+    { label: 'Cerrado', value: 'cerrado', color: '#94a3b8' },
   ];
 
-  // Obtener Estadísticas (JSON)
   const getStats = async () => {
     setLoading(true);
     try {
-      // Agregamos el status a la URL
       const url = `/admin/reports/stats?start_date=${startDate}&end_date=${endDate}&status=${selectedStatus}`;
       const data = await apiFetch(url);
       setStats(data);
@@ -40,21 +36,15 @@ export default function ReportsScreen() {
     }
   };
 
-  // Descargar PDF
   const downloadPdf = async () => {
     setDownloading(true);
     try {
       const token = await AsyncStorage.getItem(TOKEN_KEY);
-      
-      // Agregamos el estado al nombre del archivo para diferenciarlo
       const statusSuffix = selectedStatus ? `_${selectedStatus}` : '';
       const fileName = `Reporte_${startDate}_${endDate}${statusSuffix}.pdf`;
       const fileUri = FileSystem.documentDirectory + fileName;
       
-      // Agregamos el status a la URL del PDF
       const url = `${API_URL}/api/admin/reports/pdf?start_date=${startDate}&end_date=${endDate}&status=${selectedStatus}`;
-
-      console.log("Descargando:", url);
 
       const result = await FileSystem.downloadAsync(
         url,
@@ -74,7 +64,7 @@ export default function ReportsScreen() {
             dialogTitle: 'Descargar Reporte'
           });
         } else {
-          Alert.alert('PDF Descargado', `Guardado en: ${result.uri}`);
+          Alert.alert('Éxito', 'PDF descargado correctamente');
         }
       } else {
         throw new Error(`Estado ${result.status}`);
@@ -88,109 +78,193 @@ export default function ReportsScreen() {
     }
   };
 
+  const getStatusLabel = (value: string) => {
+    const status = statuses.find(s => s.value === value);
+    return status ? status.label : 'Todos';
+  };
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Reportes de Tickets</Text>
+    <ScrollView contentContainerStyle={reportsStyles.container}>
+      {/* Header */}
+      <View style={reportsStyles.header}>
+        <Text style={reportsStyles.title}>Reportes de Tickets</Text>
+        <Text style={reportsStyles.subtitle}>Genera reportes y estadísticas detalladas</Text>
+      </View>
 
       {/* Filtros */}
-      <View style={styles.filterBox}>
-        <Text style={styles.label}>Fecha Inicio (YYYY-MM-DD):</Text>
-        <TextInput 
-          style={styles.input} 
-          value={startDate} 
-          onChangeText={setStartDate} 
-          placeholder="2024-01-01" 
-          keyboardType="numeric"
-        />
+      <View style={reportsStyles.filterBox}>
+        <Text style={reportsStyles.sectionTitle}>Filtros de Búsqueda</Text>
         
-        <Text style={styles.label}>Fecha Fin (YYYY-MM-DD):</Text>
-        <TextInput 
-          style={styles.input} 
-          value={endDate} 
-          onChangeText={setEndDate} 
-          placeholder="2024-12-31" 
-          keyboardType="numeric"
-        />
+        <View style={reportsStyles.dateContainer}>
+          <View style={reportsStyles.dateInputContainer}>
+            <Text style={reportsStyles.label}>Fecha Inicio</Text>
+            <View style={reportsStyles.inputWrapper}>
+              <Text style={reportsStyles.inputIcon}>📅</Text>
+              <TextInput 
+                style={reportsStyles.input} 
+                value={startDate} 
+                onChangeText={setStartDate} 
+                placeholder="2025-01-01" 
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+          
+          <View style={reportsStyles.dateSeparator}>
+            <Text style={reportsStyles.dateSeparatorText}>a</Text>
+          </View>
+          
+          <View style={reportsStyles.dateInputContainer}>
+            <Text style={reportsStyles.label}>Fecha Fin</Text>
+            <View style={reportsStyles.inputWrapper}>
+              <Text style={reportsStyles.inputIcon}>📅</Text>
+              <TextInput 
+                style={reportsStyles.input} 
+                value={endDate} 
+                onChangeText={setEndDate} 
+                placeholder="2025-12-31" 
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+        </View>
 
-        <Text style={styles.label}>Filtrar por Estado:</Text>
-        <View style={styles.chipsContainer}>
+        <Text style={[reportsStyles.label, { marginTop: 20 }]}>Filtrar por Estado</Text>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={reportsStyles.chipsScroll}
+          contentContainerStyle={reportsStyles.chipsContainer}
+        >
           {statuses.map((item) => (
             <TouchableOpacity
               key={item.value}
               style={[
-                styles.chip,
-                selectedStatus === item.value && styles.chipSelected
+                reportsStyles.chip,
+                selectedStatus === item.value && reportsStyles.chipSelected,
+                { borderColor: item.color }
               ]}
               onPress={() => setSelectedStatus(item.value)}
             >
+              <View style={[
+                reportsStyles.chipDot,
+                { backgroundColor: item.color }
+              ]} />
               <Text style={[
-                styles.chipText,
-                selectedStatus === item.value && styles.chipTextSelected
+                reportsStyles.chipText,
+                selectedStatus === item.value && reportsStyles.chipTextSelected
               ]}>
                 {item.label}
               </Text>
             </TouchableOpacity>
           ))}
-        </View>
+        </ScrollView>
         
-        <Button title="Consultar Estadísticas" onPress={getStats} />
+        <TouchableOpacity 
+          style={reportsStyles.statsButton}
+          onPress={getStats}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <>
+              <Text style={reportsStyles.statsButtonIcon}>📊</Text>
+              <Text style={reportsStyles.statsButtonText}>Consultar Estadísticas</Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Resultados */}
-      {loading && <ActivityIndicator style={{ marginTop: 20 }} />}
-      
       {stats && (
-        <View style={styles.statsContainer}>
-          <Text style={styles.statTitle}>Resumen ({selectedStatus || 'Todos'}):</Text>
-          <View style={styles.statRow}><Text>Total (Filtrado):</Text><Text style={styles.statValue}>{stats.total}</Text></View>
-          {/* Solo mostramos el desglose si NO hay filtro o si coincide con el filtro para no confundir con ceros */}
-          {(!selectedStatus || selectedStatus === 'pendiente') && <View style={styles.statRow}><Text>Pendientes:</Text><Text style={styles.statValue}>{stats.pendientes}</Text></View>}
-          {(!selectedStatus || selectedStatus === 'en_revision') && <View style={styles.statRow}><Text>En Revisión:</Text><Text style={styles.statValue}>{stats.en_revision}</Text></View>}
-          {(!selectedStatus || selectedStatus === 'reparado') && <View style={styles.statRow}><Text>Reparados:</Text><Text style={styles.statValue}>{stats.reparados}</Text></View>}
-          {(!selectedStatus || selectedStatus === 'cerrado') && <View style={styles.statRow}><Text>Cerrados:</Text><Text style={styles.statValue}>{stats.cerrados}</Text></View>}
+        <View style={reportsStyles.statsContainer}>
+          <View style={reportsStyles.statsHeader}>
+            <Text style={reportsStyles.statTitle}>
+              Resumen {selectedStatus && `- ${getStatusLabel(selectedStatus)}`}
+            </Text>
+            <View style={reportsStyles.dateBadge}>
+              <Text style={reportsStyles.dateBadgeText}>
+                {startDate} - {endDate}
+              </Text>
+            </View>
+          </View>
+          
+          <View style={reportsStyles.statsGrid}>
+            <View style={reportsStyles.statCard}>
+              <Text style={reportsStyles.statCardLabel}>Total Tickets</Text>
+              <Text style={reportsStyles.statCardValue}>{stats.total}</Text>
+              <Text style={reportsStyles.statCardSubtext}>Filtrados</Text>
+            </View>
+            
+            {(!selectedStatus || selectedStatus === 'pendiente') && (
+              <View style={[reportsStyles.statCard, { borderLeftColor: '#f59e0b' }]}>
+                <Text style={reportsStyles.statCardLabel}>Pendientes</Text>
+                <Text style={reportsStyles.statCardValue}>{stats.pendientes}</Text>
+                <Text style={reportsStyles.statCardSubtext}>Por atender</Text>
+              </View>
+            )}
+            
+            {(!selectedStatus || selectedStatus === 'en_revision') && (
+              <View style={[reportsStyles.statCard, { borderLeftColor: '#5faee3' }]}>
+                <Text style={reportsStyles.statCardLabel}>En Revisión</Text>
+                <Text style={reportsStyles.statCardValue}>{stats.en_revision}</Text>
+                <Text style={reportsStyles.statCardSubtext}>En proceso</Text>
+              </View>
+            )}
+            
+            {(!selectedStatus || selectedStatus === 'reparado') && (
+              <View style={[reportsStyles.statCard, { borderLeftColor: '#10b981' }]}>
+                <Text style={reportsStyles.statCardLabel}>Reparados</Text>
+                <Text style={reportsStyles.statCardValue}>{stats.reparados}</Text>
+                <Text style={reportsStyles.statCardSubtext}>Completados</Text>
+              </View>
+            )}
+            
+            {(!selectedStatus || selectedStatus === 'cerrado') && (
+              <View style={[reportsStyles.statCard, { borderLeftColor: '#94a3b8' }]}>
+                <Text style={reportsStyles.statCardLabel}>Cerrados</Text>
+                <Text style={reportsStyles.statCardValue}>{stats.cerrados}</Text>
+                <Text style={reportsStyles.statCardSubtext}>Finalizados</Text>
+              </View>
+            )}
+          </View>
         </View>
       )}
 
       {/* Botón Descarga */}
-      <View style={styles.downloadSection}>
+      <View style={reportsStyles.downloadSection}>
+        <Text style={reportsStyles.sectionTitle}>Exportar Reporte</Text>
+        <Text style={reportsStyles.downloadDescription}>
+          Genera un reporte detallado en formato PDF con todos los datos filtrados
+        </Text>
+        
         <TouchableOpacity 
-          style={[styles.pdfButton, downloading && styles.pdfButtonDisabled]} 
+          style={[reportsStyles.pdfButton, downloading && reportsStyles.pdfButtonDisabled]} 
           onPress={downloadPdf}
           disabled={downloading}
         >
           {downloading ? (
-            <ActivityIndicator color="white" />
+            <View style={reportsStyles.pdfButtonLoading}>
+              <ActivityIndicator color="#ffffff" />
+              <Text style={reportsStyles.pdfButtonText}>Generando PDF...</Text>
+            </View>
           ) : (
-            <Text style={styles.pdfButtonText}>
-               📥 Descargar Reporte PDF {selectedStatus ? `(${selectedStatus})` : ''}
-            </Text>
+            <>
+              <Text style={reportsStyles.pdfButtonIcon}>📥</Text>
+              <View style={reportsStyles.pdfButtonTextContainer}>
+                <Text style={reportsStyles.pdfButtonText}>Descargar Reporte PDF</Text>
+                {selectedStatus && (
+                  <Text style={reportsStyles.pdfButtonSubtext}>
+                    Filtrado por: {getStatusLabel(selectedStatus)}
+                  </Text>
+                )}
+              </View>
+              <Text style={reportsStyles.pdfButtonArrow}>→</Text>
+            </>
           )}
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 20, flexGrow: 1, backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  filterBox: { backgroundColor: '#f9f9f9', padding: 15, borderRadius: 10, marginBottom: 20 },
-  label: { marginBottom: 5, fontWeight: '600' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 8, marginBottom: 15, backgroundColor: 'white' },
-  
-  // Estilos para los Chips de Estado
-  chipsContainer: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15, gap: 8 },
-  chip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: '#e0e0e0', marginBottom: 5, marginRight: 5 },
-  chipSelected: { backgroundColor: '#2196F3' },
-  chipText: { color: '#333', fontSize: 12 },
-  chipTextSelected: { color: 'white', fontWeight: 'bold' },
-
-  statsContainer: { marginBottom: 30 },
-  statTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  statRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  statValue: { fontWeight: 'bold' },
-  downloadSection: { alignItems: 'center' },
-  pdfButton: { backgroundColor: '#D32F2F', paddingVertical: 15, paddingHorizontal: 30, borderRadius: 8, width: '100%', alignItems: 'center' },
-  pdfButtonDisabled: { backgroundColor: '#E57373' },
-  pdfButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
-});
