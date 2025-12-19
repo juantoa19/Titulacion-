@@ -44,7 +44,7 @@ export default function UserDashboard() {
       <View style={styles.buttonsRow}>
         <TouchableOpacity 
           style={[styles.card, styles.cardCreate]} 
-          onPress={() => router.push('/user/create-ticket' as any)}
+          onPress={() => router.push('/receptionist/create-ticket' as any)}
         >
           <View style={styles.cardBackground}></View>
           <View style={styles.cardContent}>
@@ -58,15 +58,15 @@ export default function UserDashboard() {
 
         <TouchableOpacity 
           style={[styles.card, styles.cardStatus]} 
-          onPress={() => router.push('/user/ticket-status' as any)}
+          onPress={() => router.push('/receptionist/ticket-status' as any)}
         >
           <View style={styles.cardBackground}></View>
           <View style={styles.cardContent}>
             <View style={[styles.cardIcon, styles.iconStatus]}>
               <Text style={styles.iconText}>📊</Text>
             </View>
-            <Text style={styles.cardTitle}>Estado del Ticket</Text>
-            <Text style={styles.cardSubtitle}>Ver el estado de tus tickets</Text>
+            <Text style={styles.cardTitle}>Estado de los Tickets</Text>
+            <Text style={styles.cardSubtitle}>Ver el estado de los tickets</Text>
           </View>
         </TouchableOpacity>
       </View>

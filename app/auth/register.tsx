@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -5,6 +6,16 @@ import {
   TextInput, 
   TouchableOpacity, 
   Alert, 
+=======
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
   ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
@@ -15,11 +26,17 @@ import {
   Dimensions,
   Easing
 } from 'react-native';
+<<<<<<< HEAD
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import registerStyles from './styles/register.styles';
 import { useAuth, RegisterData } from '../context/_AuthContext'; 
+=======
+// 1. Importar el tipo RegisterData
+import { useAuth, RegisterData } from '../context/_AuthContext';
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -27,6 +44,13 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+<<<<<<< HEAD
+=======
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // 2. CAMBIADO: 'name' a 'nombre1' para que coincida con el formulario
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
   const [nombre1, setNombre1] = useState('');
   const [nombre2, setNombre2] = useState('');
   const [apellido1, setApellido1] = useState('');
@@ -47,7 +71,7 @@ export default function RegisterScreen() {
     confirmPassword: false,
     direccion: false
   });
-  
+
   const { register } = useAuth();
 
   // Animaciones avanzadas
@@ -132,7 +156,12 @@ export default function RegisterScreen() {
       return;
     }
 
+<<<<<<< HEAD
     if (password.length < 8) { 
+=======
+    // 6. CORREGIDO: Mínimo 8 caracteres para coincidir con Laravel
+    if (password.length < 8) {
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
       Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres');
       return;
     }
@@ -143,7 +172,12 @@ export default function RegisterScreen() {
     }
 
     setLoading(true);
+<<<<<<< HEAD
     
+=======
+
+    // 7. CORREGIDO: Construir el objeto formData completo
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
     const formData: RegisterData = {
       name: nombre1,
       nombre2: nombre2 || null,
@@ -160,8 +194,13 @@ export default function RegisterScreen() {
     try {
       await register(formData);
       Alert.alert(
+<<<<<<< HEAD
         '🎉 ¡Cuenta Creada!', 
         'Tu cuenta ha sido creada exitosamente. Redirigiendo al Login...',
+=======
+        '¡Cuenta creada!',
+        'Tu cuenta ha sido creada exitosamente. Serás redirigido al Login.',
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
         [
           {
             text: 'Continuar',
@@ -173,7 +212,7 @@ export default function RegisterScreen() {
       if (error.response && error.response.data && error.response.data.errors) {
         const errors: Record<string, string[]> = error.response.data.errors;
         const errorMessages = Object.values(errors);
-        
+
         if (errorMessages.length > 0) {
           const firstErrorMessages = errorMessages[0];
           if (firstErrorMessages.length > 0) {
@@ -236,8 +275,13 @@ export default function RegisterScreen() {
   const isFormValid = email && password && confirmPassword && nombre1 && apellido1 && cedula && telefono && password === confirmPassword && password.length >= 8;
 
   return (
+<<<<<<< HEAD
     <KeyboardAvoidingView 
       style={registerStyles.container}
+=======
+    <KeyboardAvoidingView
+      style={styles.container}
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {/* Fondo con gradiente */}
@@ -265,16 +309,27 @@ export default function RegisterScreen() {
       </View>
 
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+<<<<<<< HEAD
         <ScrollView 
           style={registerStyles.scrollView}
           contentContainerStyle={registerStyles.scrollContent}
+=======
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
           showsVerticalScrollIndicator={false}
         >
           <View style={registerStyles.inner}>
             {/* Header */}
+<<<<<<< HEAD
             <View style={registerStyles.header}>
               {/* Logo animado giratorio */}
               <Animated.View 
+=======
+            <View style={styles.header}>
+              <Animated.Text
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                 style={[
                   registerStyles.logoContainer,
                   { transform: [{ rotate: logoRotation }] }
@@ -301,6 +356,7 @@ export default function RegisterScreen() {
               </Text>
             </View>
 
+<<<<<<< HEAD
             {/* Indicador de progreso */}
             <View style={registerStyles.progressContainer}>
               <View style={[
@@ -335,6 +391,9 @@ export default function RegisterScreen() {
             </View>
 
             <Animated.View 
+=======
+            <Animated.View
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
               style={[
                 registerStyles.formContainer,
                 { 
@@ -353,6 +412,7 @@ export default function RegisterScreen() {
               </View>
 
               {/* Nombres */}
+<<<<<<< HEAD
               <View style={registerStyles.rowContainer}>
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
@@ -363,6 +423,12 @@ export default function RegisterScreen() {
                     <Ionicons name="person" size={22} color="#5faeee" />
                   </View>
                   <TextInput 
+=======
+              <View style={styles.rowContainer}>
+                <View style={styles.halfInput}>
+                  <Text style={styles.inputLabel}>Primer Nombre *</Text>
+                  <TextInput
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                     style={[
                       registerStyles.input,
                       isFocused.nombre1 && registerStyles.inputFocused,
@@ -378,6 +444,7 @@ export default function RegisterScreen() {
                     editable={!loading}
                   />
                 </View>
+<<<<<<< HEAD
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
                     Segundo Nombre
@@ -386,6 +453,11 @@ export default function RegisterScreen() {
                     <Ionicons name="person-outline" size={22} color="#94a3b8" />
                   </View>
                   <TextInput 
+=======
+                <View style={styles.halfInput}>
+                  <Text style={styles.inputLabel}>Segundo Nombre</Text>
+                  <TextInput
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                     style={[
                       registerStyles.input,
                       isFocused.nombre2 && registerStyles.inputFocused,
@@ -404,6 +476,7 @@ export default function RegisterScreen() {
               </View>
 
               {/* Apellidos */}
+<<<<<<< HEAD
               <View style={registerStyles.rowContainer}>
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
@@ -414,6 +487,12 @@ export default function RegisterScreen() {
                     <Ionicons name="people" size={22} color="#5faeee" />
                   </View>
                   <TextInput 
+=======
+              <View style={styles.rowContainer}>
+                <View style={styles.halfInput}>
+                  <Text style={styles.inputLabel}>Primer Apellido *</Text>
+                  <TextInput
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                     style={[
                       registerStyles.input,
                       isFocused.apellido1 && registerStyles.inputFocused,
@@ -429,6 +508,7 @@ export default function RegisterScreen() {
                     editable={!loading}
                   />
                 </View>
+<<<<<<< HEAD
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
                     Segundo Apellido
@@ -437,6 +517,11 @@ export default function RegisterScreen() {
                     <Ionicons name="people-outline" size={22} color="#94a3b8" />
                   </View>
                   <TextInput 
+=======
+                <View style={styles.halfInput}>
+                  <Text style={styles.inputLabel}>Segundo Apellido</Text>
+                  <TextInput
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                     style={[
                       registerStyles.input,
                       isFocused.apellido2 && registerStyles.inputFocused,
@@ -455,6 +540,7 @@ export default function RegisterScreen() {
               </View>
 
               {/* Cédula y Teléfono */}
+<<<<<<< HEAD
               <View style={registerStyles.rowContainer}>
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
@@ -465,6 +551,12 @@ export default function RegisterScreen() {
                     <Ionicons name="card" size={22} color="#5faeee" />
                   </View>
                   <TextInput 
+=======
+              <View style={styles.rowContainer}>
+                <View style={styles.halfInput}>
+                  <Text style={styles.inputLabel}>Cédula *</Text>
+                  <TextInput
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                     style={[
                       registerStyles.input,
                       isFocused.cedula && registerStyles.inputFocused,
@@ -485,6 +577,7 @@ export default function RegisterScreen() {
                     <Text style={registerStyles.errorText}>Debe tener 10 dígitos</Text>
                   )}
                 </View>
+<<<<<<< HEAD
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
                     <Ionicons name="call" size={16} color="#10518b" /> 
@@ -494,6 +587,11 @@ export default function RegisterScreen() {
                     <Ionicons name="call" size={22} color="#5faeee" />
                   </View>
                   <TextInput 
+=======
+                <View style={styles.halfInput}>
+                  <Text style={styles.inputLabel}>Teléfono *</Text>
+                  <TextInput
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                     style={[
                       registerStyles.input,
                       isFocused.telefono && registerStyles.inputFocused,
@@ -517,6 +615,7 @@ export default function RegisterScreen() {
               </View>
 
               {/* Dirección */}
+<<<<<<< HEAD
               <View style={registerStyles.inputContainer}>
                 <Text style={registerStyles.inputLabel}>
                   <Ionicons name="location" size={16} color="#10518b" /> 
@@ -526,6 +625,11 @@ export default function RegisterScreen() {
                   <Ionicons name="location-outline" size={22} color="#94a3b8" />
                 </View>
                 <TextInput 
+=======
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Dirección (Opcional)</Text>
+                <TextInput
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                   style={[
                     registerStyles.input,
                     isFocused.direccion && registerStyles.inputFocused,
@@ -551,6 +655,7 @@ export default function RegisterScreen() {
               </View>
 
               {/* Input de Email */}
+<<<<<<< HEAD
               <View style={registerStyles.inputContainer}>
                 <Text style={registerStyles.inputLabel}>
                   <Ionicons name="mail" size={16} color="#10518b" /> 
@@ -560,6 +665,11 @@ export default function RegisterScreen() {
                   <Ionicons name="mail" size={22} color="#5faeee" />
                 </View>
                 <TextInput 
+=======
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Correo electrónico *</Text>
+                <TextInput
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                   style={[
                     registerStyles.input,
                     isFocused.email && registerStyles.inputFocused,
@@ -579,6 +689,7 @@ export default function RegisterScreen() {
               </View>
 
               {/* Input de Contraseña */}
+<<<<<<< HEAD
               <View style={registerStyles.inputContainer}>
                 <Text style={registerStyles.inputLabel}>
                   <Ionicons name="key" size={16} color="#10518b" /> 
@@ -603,12 +714,47 @@ export default function RegisterScreen() {
                   onBlur={() => handleBlur('password')}
                   editable={!loading}
                 />
+=======
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Contraseña *</Text>
+
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.passwordInput,
+                      isFocused.password && styles.inputFocused,
+                      password && password.length >= 8 && styles.inputValid,
+                      password && password.length < 8 && styles.inputError
+                    ]}
+                    placeholder="Mínimo 8 caracteres"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    onFocus={() => handleFocus('password')}
+                    onBlur={() => handleBlur('password')}
+                  />
+
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    <Ionicons
+                      name={showPassword ? 'eye-off' : 'eye'}
+                      size={22}
+                      color={showPassword ? '#3b82f6' : '#64748b'}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                 {password && password.length < 8 && (
                   <Text style={registerStyles.errorText}>Mínimo 8 caracteres requeridos</Text>
                 )}
               </View>
 
               {/* Input de Confirmar Contraseña */}
+<<<<<<< HEAD
               <View style={registerStyles.inputContainer}>
                 <Text style={registerStyles.inputLabel}>
                   <Ionicons name="key-outline" size={16} color="#10518b" /> 
@@ -633,6 +779,40 @@ export default function RegisterScreen() {
                   onBlur={() => handleBlur('confirmPassword')}
                   editable={!loading}
                 />
+=======
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Confirmar Contraseña *</Text>
+
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.passwordInput,
+                      isFocused.confirmPassword && styles.inputFocused,
+                      confirmPassword && password === confirmPassword && styles.inputValid,
+                      confirmPassword && password !== confirmPassword && styles.inputError
+                    ]}
+                    placeholder="Repite tu contraseña"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    onFocus={() => handleFocus('confirmPassword')}
+                    onBlur={() => handleBlur('confirmPassword')}
+                  />
+
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    <Ionicons
+                      name={showConfirmPassword ? 'eye-off' : 'eye'}
+                      size={22}
+                      color={showConfirmPassword ? '#3b82f6' : '#64748b'}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                 {confirmPassword && password !== confirmPassword && (
                   <Text style={registerStyles.errorText}>Las contraseñas no coinciden</Text>
                 )}
@@ -670,6 +850,7 @@ export default function RegisterScreen() {
                 </Text>
               </View>
 
+<<<<<<< HEAD
               {/* Botón de Registro con efectos */}
               <TouchableOpacity 
                 style={[
@@ -677,6 +858,17 @@ export default function RegisterScreen() {
                   (!isFormValid || loading) && registerStyles.buttonDisabled
                 ]} 
                 onPress={handleRegister} 
+=======
+              {/* 11. ELIMINADO: Selector de Rol */}
+
+              {/* Botón de Registro */}
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  (!isFormValid || loading) && styles.buttonDisabled
+                ]}
+                onPress={handleRegister}
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
                 disabled={!isFormValid || loading}
                 activeOpacity={0.7}
               >
@@ -740,4 +932,199 @@ export default function RegisterScreen() {
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
+<<<<<<< HEAD
 }
+=======
+}
+
+// 12. CORREGIDO: Eliminados los estilos del selector de rol
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+  rowContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  halfInput: {
+    flex: 1,
+  },
+  sectionTitle: {
+    marginBottom: 12,
+    marginTop: 12,
+  },
+  sectionLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  inner: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#1e293b',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#64748b',
+  },
+  formContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    fontSize: 16,
+    color: '#0f172a',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  inputFocused: {
+    borderColor: '#3b82f6',
+    shadowColor: '#3b82f6',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  inputValid: {
+    borderColor: '#10b981',
+  },
+  inputError: {
+    borderColor: '#ef4444',
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  passwordRequirements: {
+    marginTop: 8,
+    marginBottom: 20,
+    padding: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 8,
+  },
+  requirementsTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+    marginBottom: 6,
+  },
+  requirementText: {
+    fontSize: 11,
+    marginBottom: 2,
+  },
+  requirementMet: {
+    color: '#10b981',
+  },
+  requirementUnmet: {
+    color: '#94a3b8',
+  },
+  button: {
+    backgroundColor: '#10b981',
+    padding: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: '#10b981',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  buttonDisabled: {
+    backgroundColor: '#cbd5e1',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  loginText: {
+    color: '#64748b',
+    fontSize: 14,
+  },
+  loginLink: {
+    color: '#3b82f6',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  passwordInput: {
+    flex: 1,
+    paddingRight: 48,
+  },
+
+  eyeButton: {
+    position: 'absolute',
+    right: 16,
+  },
+});
+>>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585

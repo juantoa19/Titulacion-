@@ -39,6 +39,10 @@ export interface Ticket {
 }
 
 export interface TicketFormData {
+  cliente_cedula: string;
+  cliente_nombre: string;
+  cliente_direccion?: string;
+  cliente_celular?: string;  
   tipo_dispositivo: string;
   marca: string;
   modelo: string;

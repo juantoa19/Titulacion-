@@ -21,16 +21,12 @@ type Priority = 'alta' | 'media' | 'baja';
 interface Ticket {
   id: string;
   ticketId: string;
-  userId: string;
   userInfo: {
     nombre1: string;
-    nombre2?: string;
     apellido1: string;
-    apellido2?: string;
-    cedula?: string;
-    telefono?: string;
-    email?: string;
-    direccion?: string;
+    cedula: string;
+    telefono: string;
+    direccion: string;
   };
   deviceInfo: {
     tipoDispositivo: string;
@@ -49,24 +45,22 @@ interface Ticket {
  * Mapea los datos de la API (snake_case) al formato del Frontend (camelCase)
  */
 const mapApiToTicket = (apiTicket: any): Ticket => {
-  const usuario = apiTicket.usuario || {}; // Objeto de usuario (cliente)
+  const cliente = apiTicket.cliente || {}; // Objeto de usuario (cliente)
   
   // Dividir el nombre del usuario
-  const nombreCompleto = (usuario.name || 'Usuario Desconocido').split(' ');
+  const nombreCompleto = (cliente.nombre || 'Usuario Desconocido').split(' ');
   const nombre1 = nombreCompleto[0] || '';
   const apellido1 = nombreCompleto.length > 1 ? nombreCompleto[1] : '';
 
   return {
     id: apiTicket.id.toString(),
     ticketId: `TKT-${apiTicket.id}`,
-    userId: apiTicket.user_id.toString(),
     userInfo: {
       nombre1: nombre1,
       apellido1: apellido1,
-      cedula: usuario.cedula || 'N/A', // Asume que el modelo User tiene 'cedula', 'telefono', etc.
-      telefono: usuario.telefono || 'N/A',
-      email: usuario.email || 'N/A',
-      direccion: usuario.direccion || 'N/A',
+      cedula: cliente.cedula || 'N/A',     // Correcto
+      telefono: cliente.celular || 'N/A',  // Correcto
+      direccion: cliente.direccion || 'N/A'// Correcto
     },
     deviceInfo: {
       tipoDispositivo: apiTicket.tipo_dispositivo,
@@ -227,12 +221,6 @@ export default function TicketsDisponibles() {
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>Teléfono:</Text>
                 <Text style={styles.detailValue}>{ticket.userInfo.telefono}</Text>
-              </View>
-            )}
-            {ticket.userInfo.email && (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Email:</Text>
-                <Text style={styles.detailValue}>{ticket.userInfo.email}</Text>
               </View>
             )}
             {ticket.userInfo.direccion && (

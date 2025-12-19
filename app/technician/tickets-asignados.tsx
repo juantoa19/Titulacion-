@@ -10,10 +10,11 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import { useAuth } from '../context/_AuthContext';
 import { apiFetch } from '../services/api'; 
-import { useFocusEffect, router } from 'expo-router'; // <--- CORREGIDO: Se añade router
+import { useFocusEffect, router } from 'expo-router';
 
 type TicketStatus = 'pendiente' | 'en_revision' | 'reparado' | 'cerrado';
 type Priority = 'alta' | 'media' | 'baja';
@@ -45,25 +46,27 @@ interface Ticket {
   tecnicoAsignado?: string;
 }
 
+// --- CORRECCIÓN CLAVE AQUÍ ---
 const mapApiToTicket = (apiTicket: any): Ticket => {
-  const usuario = apiTicket.usuario || {};
+  // 1. Usamos 'cliente' porque así viene del backend (Ticket::with('cliente'))
+  const cliente = apiTicket.cliente || {}; 
   const tecnico = apiTicket.tecnico || {};
   
-  const nombreCompleto = (usuario.name || 'Usuario Desconocido').split(' ');
+  // 2. El campo en la BD es 'nombre' (nombre completo), así que lo separamos
+  const nombreCompleto = (cliente.nombre || 'Cliente Desconocido').split(' ');
   const nombre1 = nombreCompleto[0] || '';
-  const apellido1 = nombreCompleto.length > 1 ? nombreCompleto[1] : '';
+  const apellido1 = nombreCompleto.slice(1).join(' '); 
 
   return {
     id: apiTicket.id.toString(),
     ticketId: `TKT-${apiTicket.id}`,
-    userId: apiTicket.user_id.toString(),
+    userId: apiTicket.client_id ? apiTicket.client_id.toString() : '0',
     userInfo: {
       nombre1: nombre1,
       apellido1: apellido1,
-      cedula: usuario.cedula || 'N/A',
-      telefono: usuario.telefono || 'N/A',
-      email: usuario.email || 'N/A',
-      direccion: usuario.direccion || 'N/A',
+      cedula: cliente.cedula || 'N/A',      // Campo correcto: cedula
+      telefono: cliente.celular || 'N/A',   // Campo correcto: celular
+      direccion: cliente.direccion || 'N/A',// Campo correcto: direccion
     },
     deviceInfo: {
       tipoDispositivo: apiTicket.tipo_dispositivo,
@@ -88,6 +91,11 @@ export default function TicketsAsignados() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [newStatus, setNewStatus] = useState<TicketStatus | null>(null);
   const [newPriority, setNewPriority] = useState<Priority | null>(null);
+
+  // Estados para el Cierre
+  const [observaciones, setObservaciones] = useState('');
+  const [costoTotal, setCostoTotal] = useState('');
+  const [abono, setAbono] = useState('');
 
   useFocusEffect(
     useCallback(() => {
@@ -115,31 +123,72 @@ export default function TicketsAsignados() {
       fetchMyTickets();
   };
 
+  const handleCloseModal = () => {
+    setSelectedTicket(null);
+    setNewStatus(null);
+    setNewPriority(null);
+    setObservaciones('');
+    setCostoTotal('');
+    setAbono('');
+  };
+
   const handleSaveChanges = async () => {
     if (!selectedTicket) return;
 
     const statusToSend = newStatus || selectedTicket.estado;
     const priorityToSend = newPriority || selectedTicket.prioridad;
 
-    try {
-      // CORREGIDO: Cambiado 'PUT' por 'PATCH' para coincidir con api.ts y Laravel
-      await apiFetch(`/tickets/${selectedTicket.id}`, 'PATCH', {
-        estado_usuario: statusToSend,
-        prioridad: priorityToSend,
-      });
+    let payload: any = {
+      estado_usuario: statusToSend,
+      prioridad: priorityToSend,
+    };
 
+    if (statusToSend === 'cerrado') {
+      if (!observaciones.trim()) {
+        Alert.alert('Faltan datos', 'Debes ingresar las observaciones técnicas.');
+        return;
+      }
+      if (!costoTotal || !abono) {
+        Alert.alert('Faltan datos', 'Debes ingresar el costo total y el abono.');
+        return;
+      }
+
+      const costoNum = parseFloat(costoTotal);
+      const abonoNum = parseFloat(abono);
+
+      if (abonoNum > costoNum) {
+        Alert.alert('Error', 'El abono no puede ser mayor al costo total.');
+        return;
+      }
+
+      payload = {
+        ...payload,
+        estado_interno: 'completado',
+        observaciones_tecnico: observaciones,
+        costo_total: costoNum,
+        abono: abonoNum,
+      };
+    }
+
+    try {
+      await apiFetch(`/tickets/${selectedTicket.id}`, 'PATCH', payload);
       Alert.alert('Éxito', `Ticket ${selectedTicket.ticketId} actualizado`);
-      setSelectedTicket(null);
-      setNewStatus(null);
-      setNewPriority(null);
+      handleCloseModal();
       fetchMyTickets(); 
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'No se pudo actualizar el ticket');
+      const msg = error.response?.data?.message || 'No se pudo actualizar el ticket';
+      const errors = error.response?.data?.errors;
+      
+      if (errors) {
+        const firstErrorKey = Object.keys(errors)[0];
+        Alert.alert('Error de Validación', errors[firstErrorKey][0]);
+      } else {
+        Alert.alert('Error', msg);
+      }
     }
   };
 
-  // --- Helpers de UI ---
-
+  // Helpers de UI
   const getStatusColor = (status: TicketStatus) => {
     switch (status) {
       case 'pendiente': return '#ef4444';
@@ -165,16 +214,16 @@ export default function TicketsAsignados() {
     });
   };
 
-  // --- Componentes ---
-
   const TicketCard = ({ ticket }: { ticket: Ticket }) => (
     <TouchableOpacity 
       style={styles.card} 
       onPress={() => {
         setSelectedTicket(ticket);
         setNewStatus(ticket.estado);
-        // CORREGIDO: Añadido || null para evitar error de undefined
         setNewPriority(ticket.prioridad || null); 
+        setObservaciones('');
+        setCostoTotal('');
+        setAbono('');
       }}
     >
       <View style={styles.ticketHeader}>
@@ -204,94 +253,8 @@ export default function TicketsAsignados() {
     </TouchableOpacity>
   );
 
-  const EditDetailModal = ({ ticket }: { ticket: Ticket }) => (
-    <Modal transparent animationType="fade" visible={!!selectedTicket}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <ScrollView showsVerticalScrollIndicator={false}>
-            <Text style={styles.modalTitle}>{ticket.ticketId}</Text>
-
-            {/* Info Usuario */}
-            <Text style={styles.sectionTitle}>Información del Usuario</Text>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Nombre:</Text>
-              <Text style={styles.detailValue}>{ticket.userInfo?.nombre1} {ticket.userInfo?.apellido1}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Teléfono:</Text>
-              <Text style={styles.detailValue}>{ticket.userInfo?.telefono}</Text>
-            </View>
-
-            {/* Info Dispositivo */}
-            <Text style={styles.sectionTitle}>Información del Dispositivo</Text>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Marca:</Text>
-              <Text style={styles.detailValue}>{ticket.deviceInfo.marca}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Modelo:</Text>
-              <Text style={styles.detailValue}>{ticket.deviceInfo.modelo}</Text>
-            </View>
-
-            {/* Problema */}
-            <Text style={styles.sectionTitle}>Descripción del Problema</Text>
-            <View style={styles.problemBox}>
-              <Text style={styles.problemDetailText}>{ticket.problema}</Text>
-            </View>
-
-            {/* Cambiar Estado */}
-            <Text style={styles.sectionTitle}>Cambiar Estado</Text>
-            <View style={styles.buttonGrid}>
-              {(['pendiente', 'en_revision', 'reparado', 'cerrado'] as TicketStatus[]).map(status => (
-                <TouchableOpacity
-                  key={status}
-                  style={[
-                    styles.stateButton,
-                    (newStatus || ticket.estado) === status && styles.stateButtonActive
-                  ]}
-                  onPress={() => setNewStatus(status)}
-                >
-                  <Text style={[styles.stateButtonText, (newStatus || ticket.estado) === status && styles.stateButtonTextActive]}>
-                    {status.replace('_', ' ')}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Cambiar Prioridad */}
-            <Text style={styles.sectionTitle}>Cambiar Prioridad</Text>
-            <View style={styles.buttonGrid}>
-              {(['baja', 'media', 'alta'] as Priority[]).map(priority => (
-                <TouchableOpacity
-                  key={priority}
-                  style={[
-                    styles.priorityButton,
-                    (newPriority || ticket.prioridad) === priority && styles.priorityButtonActive
-                  ]}
-                  onPress={() => setNewPriority(priority)}
-                >
-                  <Text style={[styles.priorityButtonText, (newPriority || ticket.prioridad) === priority && styles.priorityButtonTextActive]}>
-                    {priority}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.technicianLabel}>Técnico Asignado: {ticket.tecnicoAsignado}</Text>
-          </ScrollView>
-
-          <View style={styles.modalActions}>
-            <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setSelectedTicket(null)}>
-              <Text style={styles.cancelButtonText}>Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleSaveChanges}>
-              <Text style={styles.saveButtonText}>Guardar Cambios</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
+  const isClosing = newStatus === 'cerrado';
+  const saldoPendiente = (parseFloat(costoTotal || '0') - parseFloat(abono || '0')).toFixed(2);
 
   return (
     <View style={styles.container}>
@@ -317,7 +280,147 @@ export default function TicketsAsignados() {
           }
         />
       )}
-      {selectedTicket && <EditDetailModal ticket={selectedTicket} />}
+
+      {selectedTicket && (
+        <Modal transparent animationType="fade" visible={!!selectedTicket} onRequestClose={handleCloseModal}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Text style={styles.modalTitle}>{selectedTicket.ticketId}</Text>
+
+                <Text style={styles.sectionTitle}>Información del Usuario</Text>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Nombre:</Text>
+                  <Text style={styles.detailValue}>{selectedTicket.userInfo?.nombre1} {selectedTicket.userInfo?.apellido1}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                   <Text style={styles.detailLabel}>Cédula:</Text>
+                   <Text style={styles.detailValue}>{selectedTicket.userInfo?.cedula}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Teléfono:</Text>
+                  <Text style={styles.detailValue}>{selectedTicket.userInfo?.telefono}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                   <Text style={styles.detailLabel}>Dirección:</Text>
+                   <Text style={styles.detailValue}>{selectedTicket.userInfo?.direccion}</Text>
+                </View>
+
+                <Text style={styles.sectionTitle}>Información del Dispositivo</Text>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Marca:</Text>
+                  <Text style={styles.detailValue}>{selectedTicket.deviceInfo.marca}</Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Modelo:</Text>
+                  <Text style={styles.detailValue}>{selectedTicket.deviceInfo.modelo}</Text>
+                </View>
+
+                <Text style={styles.sectionTitle}>Descripción del Problema</Text>
+                <View style={styles.problemBox}>
+                  <Text style={styles.problemDetailText}>{selectedTicket.problema}</Text>
+                </View>
+
+                <Text style={styles.sectionTitle}>Cambiar Estado</Text>
+                <View style={styles.buttonGrid}>
+                  {(['pendiente', 'en_revision', 'reparado', 'cerrado'] as TicketStatus[]).map(status => (
+                    <TouchableOpacity
+                      key={status}
+                      style={[
+                        styles.stateButton,
+                        (newStatus || selectedTicket.estado) === status && styles.stateButtonActive
+                      ]}
+                      onPress={() => setNewStatus(status)}
+                    >
+                      <Text style={[styles.stateButtonText, (newStatus || selectedTicket.estado) === status && styles.stateButtonTextActive]}>
+                        {status.replace('_', ' ')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {isClosing && (
+                  <View style={styles.closingFieldsContainer}>
+                    <Text style={styles.helperText}>Complete los datos para cerrar el ticket:</Text>
+                    
+                    <Text style={styles.inputLabel}>Observaciones del Técnico *</Text>
+                    <TextInput
+                      style={[styles.input, styles.textArea]}
+                      placeholder="Detalles de la reparación realizada..."
+                      multiline
+                      numberOfLines={3}
+                      value={observaciones}
+                      onChangeText={setObservaciones}
+                    />
+
+                    <View style={styles.rowInputs}>
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <Text style={styles.inputLabel}>Costo Total ($) *</Text>
+                        <TextInput
+                          style={styles.input}
+                          placeholder="0.00"
+                          keyboardType="numeric"
+                          value={costoTotal}
+                          onChangeText={setCostoTotal}
+                        />
+                      </View>
+                      <View style={{ flex: 1, marginLeft: 8 }}>
+                        <Text style={styles.inputLabel}>Abono ($) *</Text>
+                        <TextInput
+                          style={styles.input}
+                          placeholder="0.00"
+                          keyboardType="numeric"
+                          value={abono}
+                          onChangeText={setAbono}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.saldoContainer}>
+                      <Text style={styles.saldoLabel}>Saldo Pendiente:</Text>
+                      <Text style={[
+                        styles.saldoValue, 
+                        parseFloat(saldoPendiente) > 0 ? { color: '#ef4444' } : { color: '#10b981' }
+                      ]}>
+                        ${saldoPendiente}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                <Text style={styles.sectionTitle}>Cambiar Prioridad</Text>
+                <View style={styles.buttonGrid}>
+                  {(['baja', 'media', 'alta'] as Priority[]).map(priority => (
+                    <TouchableOpacity
+                      key={priority}
+                      style={[
+                        styles.priorityButton,
+                        (newPriority || selectedTicket.prioridad) === priority && styles.priorityButtonActive
+                      ]}
+                      onPress={() => setNewPriority(priority)}
+                    >
+                      <Text style={[styles.priorityButtonText, (newPriority || selectedTicket.prioridad) === priority && styles.priorityButtonTextActive]}>
+                        {priority}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={styles.technicianLabel}>Técnico Asignado: {selectedTicket.tecnicoAsignado}</Text>
+              </ScrollView>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={handleCloseModal}>
+                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleSaveChanges}>
+                  <Text style={styles.saveButtonText}>Guardar Cambios</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -325,22 +428,10 @@ export default function TicketsAsignados() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#f8fafc' },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 12, color: '#0f172a' },
-  emptyContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center',
-    marginTop: 60,
-  },
-  emptyText: { 
-    fontSize: 16, 
-    color: '#94a3b8' 
-  },
-  linkText: {
-    fontSize: 16,
-    color: '#0b3d91',
-    fontWeight: '600',
-    marginTop: 10,
-  },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 60 },
+  emptyText: { fontSize: 16, color: '#94a3b8' },
+  linkText: { fontSize: 16, color: '#0b3d91', fontWeight: '600', marginTop: 10 },
+  
   card: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 12, shadowColor: 'rgba(15,23,42,0.06)', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 3 },
   ticketHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   ticketId: { fontWeight: '700', color: '#0f172a', fontSize: 16 },
@@ -385,4 +476,15 @@ const styles = StyleSheet.create({
   cancelButtonText: { color: '#64748b', fontWeight: '700', fontSize: 16 },
   saveButton: { backgroundColor: '#10b981' },
   saveButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+
+  // Estilos Campos Cierre
+  closingFieldsContainer: { marginTop: 15, marginBottom: 5, borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 15 },
+  helperText: { fontSize: 13, color: '#64748b', marginBottom: 10, fontStyle: 'italic' },
+  inputLabel: { fontSize: 14, fontWeight: '600', color: '#334155', marginBottom: 6 },
+  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#334155', marginBottom: 12 },
+  textArea: { height: 80, textAlignVertical: 'top' },
+  rowInputs: { flexDirection: 'row', justifyContent: 'space-between' },
+  saldoContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc', padding: 10, borderRadius: 8, marginTop: 4 },
+  saldoLabel: { fontSize: 14, fontWeight: '700', color: '#0f172a' },
+  saldoValue: { fontSize: 18, fontWeight: '800' },
 });

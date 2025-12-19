@@ -24,7 +24,7 @@ interface User {
   roles: Role[];
 }
 
-type FilterRole = 'all' | 'admin' | 'tecnico' | 'usuario';
+type FilterRole = 'all' | 'admin' | 'tecnico' | 'recepcionista';
 
 export default function UsersManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -155,7 +155,7 @@ export default function UsersManagement() {
             <View style={[styles.roleBadge, { backgroundColor: roleColor + '20' }]}>
               <MaterialCommunityIcons name={roleIcon as any} size={12} color={roleColor} />
               <Text style={[styles.roleText, { color: roleColor }]}>
-                {item.roles.map(r => r.name).join(', ') || 'usuario'}
+                {item.roles.map(r => r.name).join(', ') || 'recepcionista'}
               </Text>
             </View>
           </View>
@@ -188,8 +188,8 @@ export default function UsersManagement() {
               <TouchableOpacity 
                 style={[styles.actionButton, isTech ? styles.btnRevoke : styles.btnPromote]}
                 onPress={() => {
-                   // Si es técnico -> baja a usuario. Si es usuario -> sube a técnico.
-                   const newRole = isTech ? 'usuario' : 'tecnico';
+                   // Si es técnico -> baja a recepcionista. Si es recepcionista -> sube a técnico.
+                   const newRole = isTech ? 'recepcionista' : 'tecnico';
                    const text = isTech ? 'quitar rol de técnico' : 'hacer TÉCNICO';
                    changeRole(item.id, newRole, text);
                 }}
@@ -257,7 +257,7 @@ export default function UsersManagement() {
         {/* Filtros de Rol */}
         <View style={styles.filtersRow}>
           <FilterChip role="tecnico" label="Técnicos" />
-          <FilterChip role="usuario" label="Usuarios" />
+          <FilterChip role="recepcionista" label="Recepcionistas" />
           <FilterChip role="admin" label="Admins" />
           <FilterChip role="all" label="Todos" />
         </View>

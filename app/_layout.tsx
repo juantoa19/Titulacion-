@@ -38,7 +38,7 @@ function RootLayoutNav() {
     } else if (user && inAuthGroup) {
       // Si SÍ hay usuario Y SÍ está en el grupo 'auth' (o sea, en login/register)
       // lo mandamos a su panel correspondiente.
-      let path: any = '/user/dashboard';
+      let path: any = '/receptionist/dashboard';
       if (user.role === 'admin') {
         path = '/admin';
       } else if (user.role === 'tecnico') {
@@ -67,7 +67,7 @@ function RootLayoutNav() {
       <Stack.Screen name="welcome" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      <Stack.Screen name="user/dashboard" options={{ title: 'Panel de Usuario' }} />
+      <Stack.Screen name="receptionist/dashboard" options={{ title: 'Panel de Usuario' }} />
       <Stack.Screen name="technician/dashboard" options={{ title: 'Panel de Técnico' }} />
       <Stack.Screen name="admin/index" options={{ title: 'Panel de Administrador' }} />
       
