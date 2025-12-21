@@ -3,15 +3,16 @@ import {
   View, 
   Text, 
   FlatList, 
-  StyleSheet, 
   TouchableOpacity, 
   Alert, 
   ActivityIndicator, 
   TextInput,
   RefreshControl 
 } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { apiFetch } from '../services/api';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import usersStyles from './styles/users.styles';
 
 interface Role {
   name: string;
@@ -143,18 +144,18 @@ export default function UsersManagement() {
     }
 
     return (
-      <View style={[styles.card, { borderLeftColor: roleColor, borderLeftWidth: 4 }]}>
-        <View style={styles.cardContent}>
-          <View style={styles.userInfo}>
-            <View style={styles.headerRow}>
-              <Text style={styles.userName}>{item.name}</Text>
+      <View style={[usersStyles.card, { borderLeftColor: roleColor, borderLeftWidth: 4 }]}>
+        <View style={usersStyles.cardContent}>
+          <View style={usersStyles.userInfo}>
+            <View style={usersStyles.headerRow}>
+              <Text style={usersStyles.userName}>{item.name}</Text>
               {isAdmin && <MaterialCommunityIcons name="crown" size={16} color="#eab308" />}
             </View>
-            <Text style={styles.userEmail}>{item.email}</Text>
+            <Text style={usersStyles.userEmail}>{item.email}</Text>
             
-            <View style={[styles.roleBadge, { backgroundColor: roleColor + '20' }]}>
+            <View style={[usersStyles.roleBadge, { backgroundColor: roleColor + '20' }]}>
               <MaterialCommunityIcons name={roleIcon as any} size={12} color={roleColor} />
-              <Text style={[styles.roleText, { color: roleColor }]}>
+              <Text style={[usersStyles.roleText, { color: roleColor }]}>
                 {item.roles.map(r => r.name).join(', ') || 'recepcionista'}
               </Text>
             </View>
@@ -166,7 +167,7 @@ export default function UsersManagement() {
             {/* 1. Botón para ADMINISTRADORES: Bajar a Técnico */}
             {isAdmin && (
                <TouchableOpacity 
-                 style={[styles.actionButton, { backgroundColor: '#10518b' }]}
+                 style={[usersStyles.actionButton, { backgroundColor: '#10518b' }]}
                  onPress={() => changeRole(item.id, 'tecnico', 'degradar a TÉCNICO')}
                >
                  <MaterialCommunityIcons name="arrow-down-bold" size={20} color="white" />
@@ -176,7 +177,7 @@ export default function UsersManagement() {
             {/* 2. Botón para NO ADMINS: Subir a Admin */}
             {!isAdmin && (
               <TouchableOpacity 
-                style={[styles.actionButton, { backgroundColor: '#ffdf2b' }]}
+                style={[usersStyles.actionButton, { backgroundColor: '#ffdf2b' }]}
                 onPress={() => changeRole(item.id, 'admin', 'ascender a ADMINISTRADOR')}
               >
                 <MaterialCommunityIcons name="crown" size={20} color="white" />
@@ -186,7 +187,7 @@ export default function UsersManagement() {
             {/* 3. Botón TÉCNICO/USUARIO (Switch) */}
             {!isAdmin && (
               <TouchableOpacity 
-                style={[styles.actionButton, isTech ? styles.btnRevoke : styles.btnPromote]}
+                style={[usersStyles.actionButton, isTech ? usersStyles.btnRevoke : usersStyles.btnPromote]}
                 onPress={() => {
                    // Si es técnico -> baja a recepcionista. Si es recepcionista -> sube a técnico.
                    const newRole = isTech ? 'recepcionista' : 'tecnico';
@@ -204,7 +205,7 @@ export default function UsersManagement() {
 
             {/* 4. BOTÓN ELIMINAR (NUEVO) - Rojo siempre */}
             <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: '#ef4444' }]}
+              style={[usersStyles.actionButton, { backgroundColor: '#ef4444' }]}
               onPress={() => deleteUser(item.id)}
             >
               <MaterialCommunityIcons name="trash-can" size={20} color="white" />
@@ -219,29 +220,36 @@ export default function UsersManagement() {
   const FilterChip = ({ role, label }: { role: FilterRole, label: string }) => (
     <TouchableOpacity 
       style={[
-        styles.chip, 
-        selectedRole === role && styles.chipActive
+        usersStyles.chip, 
+        selectedRole === role && usersStyles.chipActive
       ]}
       onPress={() => setSelectedRole(role)}
     >
       <Text style={[
-        styles.chipText, 
-        selectedRole === role && styles.chipTextActive
+        usersStyles.chipText, 
+        selectedRole === role && usersStyles.chipTextActive
       ]}>{label}</Text>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={usersStyles.container}>
       {/* --- Header con Buscador y Filtros --- */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.screenTitle}>Gestión de Usuarios</Text>
+      <View style={usersStyles.headerContainer}>
+         <View style={usersStyles.headerBackground} />
+    <View style={usersStyles.headerContent}>
+      <Text style={usersStyles.screenTitle}>Gestión de Usuarios</Text>
+      <Text style={usersStyles.screenSubtitle}>Administra los usuarios del sistema</Text>
+      <View style={usersStyles.adminBadge}>
+        <Text style={usersStyles.adminBadgeText}>Panel de Administrador</Text>
+      </View>
+    </View>
         
         {/* Buscador */}
-        <View style={styles.searchBar}>
+        <View style={usersStyles.searchBar}>
           <Ionicons name="search" size={20} color="#94a3b8" />
           <TextInput 
-            style={styles.searchInput}
+            style={usersStyles.searchInput}
             placeholder="Buscar por nombre o correo..."
             placeholderTextColor="#94a3b8"
             value={searchQuery}
@@ -255,7 +263,7 @@ export default function UsersManagement() {
         </View>
 
         {/* Filtros de Rol */}
-        <View style={styles.filtersRow}>
+        <View style={usersStyles.filtersRow}>
           <FilterChip role="tecnico" label="Técnicos" />
           <FilterChip role="recepcionista" label="Recepcionistas" />
           <FilterChip role="admin" label="Admins" />
@@ -276,9 +284,9 @@ export default function UsersManagement() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
           ListEmptyComponent={
-            <View style={styles.emptyState}>
+            <View style={usersStyles.emptyState}>
               <MaterialCommunityIcons name="account-search" size={48} color="#cbd5e1" />
-              <Text style={styles.emptyText}>No se encontraron usuarios</Text>
+              <Text style={usersStyles.emptyText}>No se encontraron usuarios</Text>
             </View>
           }
         />
@@ -286,148 +294,3 @@ export default function UsersManagement() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  
-  headerContainer: {
-    backgroundColor: '#fff',
-    paddingTop: 20,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-  },
-  screenTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#1e293b',
-    marginBottom: 15,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 45,
-    marginBottom: 15,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 15,
-    color: '#334155',
-  },
-  filtersRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  chip: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: '#f1f5f9',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  chipActive: {
-    backgroundColor: '#1e293b',
-    borderColor: '#1e293b',
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#64748b',
-  },
-  chipTextActive: {
-    color: '#ffffff',
-  },
-
-  // Estilos de Tarjeta
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 12,
-    padding: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-  },
-  cardContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  userInfo: {
-    flex: 1,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1e293b',
-  },
-  userEmail: {
-    fontSize: 14,
-    color: '#64748b',
-    marginBottom: 8,
-  },
-  roleBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    gap: 4,
-  },
-  roleText: {
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  
-  // Botones de acción
-  actionButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  btnPromote: {
-    backgroundColor: '#10518b', // Azul para promover
-  },
-  btnRevoke: {
-    backgroundColor: '#66cccc', // Rojo para quitar
-  },
-  btnText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  
-  emptyState: {
-    alignItems: 'center',
-    marginTop: 60,
-    gap: 10,
-  },
-  emptyText: {
-    color: '#94a3b8',
-    fontSize: 16,
-  }
-});

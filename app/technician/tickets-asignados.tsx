@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
   Modal,
   Alert,
@@ -12,9 +11,11 @@ import {
   RefreshControl,
   TextInput,
 } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useAuth } from '../context/_AuthContext';
 import { apiFetch } from '../services/api'; 
 import { useFocusEffect, router } from 'expo-router';
+import ticketsAsignadosStyles from './styles/tickets-asignados.styles';
 
 type TicketStatus = 'pendiente' | 'en_revision' | 'reparado' | 'cerrado';
 type Priority = 'alta' | 'media' | 'baja';
@@ -46,13 +47,10 @@ interface Ticket {
   tecnicoAsignado?: string;
 }
 
-// --- CORRECCIÓN CLAVE AQUÍ ---
 const mapApiToTicket = (apiTicket: any): Ticket => {
-  // 1. Usamos 'cliente' porque así viene del backend (Ticket::with('cliente'))
   const cliente = apiTicket.cliente || {}; 
   const tecnico = apiTicket.tecnico || {};
   
-  // 2. El campo en la BD es 'nombre' (nombre completo), así que lo separamos
   const nombreCompleto = (cliente.nombre || 'Cliente Desconocido').split(' ');
   const nombre1 = nombreCompleto[0] || '';
   const apellido1 = nombreCompleto.slice(1).join(' '); 
@@ -64,9 +62,9 @@ const mapApiToTicket = (apiTicket: any): Ticket => {
     userInfo: {
       nombre1: nombre1,
       apellido1: apellido1,
-      cedula: cliente.cedula || 'N/A',      // Campo correcto: cedula
-      telefono: cliente.celular || 'N/A',   // Campo correcto: celular
-      direccion: cliente.direccion || 'N/A',// Campo correcto: direccion
+      cedula: cliente.cedula || 'N/A',
+      telefono: cliente.celular || 'N/A',
+      direccion: cliente.direccion || 'N/A',
     },
     deviceInfo: {
       tipoDispositivo: apiTicket.tipo_dispositivo,
@@ -92,7 +90,6 @@ export default function TicketsAsignados() {
   const [newStatus, setNewStatus] = useState<TicketStatus | null>(null);
   const [newPriority, setNewPriority] = useState<Priority | null>(null);
 
-  // Estados para el Cierre
   const [observaciones, setObservaciones] = useState('');
   const [costoTotal, setCostoTotal] = useState('');
   const [abono, setAbono] = useState('');
@@ -188,7 +185,6 @@ export default function TicketsAsignados() {
     }
   };
 
-  // Helpers de UI
   const getStatusColor = (status: TicketStatus) => {
     switch (status) {
       case 'pendiente': return '#ef4444';
@@ -216,7 +212,7 @@ export default function TicketsAsignados() {
 
   const TicketCard = ({ ticket }: { ticket: Ticket }) => (
     <TouchableOpacity 
-      style={styles.card} 
+      style={ticketsAsignadosStyles.card} 
       onPress={() => {
         setSelectedTicket(ticket);
         setNewStatus(ticket.estado);
@@ -226,29 +222,29 @@ export default function TicketsAsignados() {
         setAbono('');
       }}
     >
-      <View style={styles.ticketHeader}>
-        <Text style={styles.ticketId}>{ticket.ticketId}</Text>
-        <View style={styles.statusBadge}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor(ticket.estado) }]} />
-          <Text style={styles.statusText}>{ticket.estado.replace('_', ' ')}</Text>
+      <View style={ticketsAsignadosStyles.ticketHeader}>
+        <Text style={ticketsAsignadosStyles.ticketId}>{ticket.ticketId}</Text>
+        <View style={ticketsAsignadosStyles.statusBadge}>
+          <View style={[ticketsAsignadosStyles.statusDot, { backgroundColor: getStatusColor(ticket.estado) }]} />
+          <Text style={ticketsAsignadosStyles.statusText}>{ticket.estado.replace('_', ' ')}</Text>
         </View>
       </View>
 
-      <Text style={styles.deviceText}>{ticket.deviceInfo.marca} {ticket.deviceInfo.modelo} • {ticket.deviceInfo.tipoDispositivo}</Text>
-      <Text style={styles.userText}>{ticket.userInfo?.nombre1} {ticket.userInfo?.apellido1} • {ticket.userInfo?.telefono}</Text>
-      <Text style={styles.problemText} numberOfLines={2}>{ticket.problema}</Text>
+      <Text style={ticketsAsignadosStyles.deviceText}>{ticket.deviceInfo.marca} {ticket.deviceInfo.modelo} • {ticket.deviceInfo.tipoDispositivo}</Text>
+      <Text style={ticketsAsignadosStyles.userText}>{ticket.userInfo?.nombre1} {ticket.userInfo?.apellido1} • {ticket.userInfo?.telefono}</Text>
+      <Text style={ticketsAsignadosStyles.problemText} numberOfLines={2}>{ticket.problema}</Text>
 
-      <View style={styles.cardFooter}>
-        <Text style={styles.dateText}>{formatDate(ticket.fechaSolicitud)}</Text>
+      <View style={ticketsAsignadosStyles.cardFooter}>
+        <Text style={ticketsAsignadosStyles.dateText}>{formatDate(ticket.fechaSolicitud)}</Text>
         {ticket.prioridad ? (
-          <Text style={[styles.priorityText, { color: getPriorityColor(ticket.prioridad) }]}>
+          <Text style={[ticketsAsignadosStyles.priorityText, { color: getPriorityColor(ticket.prioridad) }]}>
             {ticket.prioridad.toUpperCase()}
           </Text>
         ) : null}
       </View>
 
-      <View style={styles.assignedBadge}>
-        <Text style={styles.assignedText}>👨‍🔧 Asignado a: {ticket.tecnicoAsignado}</Text>
+      <View style={ticketsAsignadosStyles.assignedBadge}>
+        <Text style={ticketsAsignadosStyles.assignedText}>👨‍🔧 Asignado a: {ticket.tecnicoAsignado}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -257,10 +253,37 @@ export default function TicketsAsignados() {
   const saldoPendiente = (parseFloat(costoTotal || '0') - parseFloat(abono || '0')).toFixed(2);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Mis Tickets Asignados</Text>
+    <View style={ticketsAsignadosStyles.container}>
+      {/* Header mejorado */}
+      <View style={ticketsAsignadosStyles.header}>
+        <Text style={ticketsAsignadosStyles.title}>Mis Tickets Asignados</Text>
+        <Text style={ticketsAsignadosStyles.subtitle}>Tickets en los que estás trabajando</Text>
+        
+        {/* Estadísticas rápidas */}
+        <View style={ticketsAsignadosStyles.statsContainer}>
+          <View style={ticketsAsignadosStyles.statItem}>
+            <Text style={ticketsAsignadosStyles.statNumber}>{myTickets.length}</Text>
+            <Text style={ticketsAsignadosStyles.statLabel}>Total</Text>
+          </View>
+          <View style={ticketsAsignadosStyles.statItem}>
+            <Text style={ticketsAsignadosStyles.statNumber}>
+              {myTickets.filter(t => t.estado === 'pendiente').length}
+            </Text>
+            <Text style={ticketsAsignadosStyles.statLabel}>Pendientes</Text>
+          </View>
+          <View style={ticketsAsignadosStyles.statItem}>
+            <Text style={ticketsAsignadosStyles.statNumber}>
+              {myTickets.filter(t => t.estado === 'en_revision').length}
+            </Text>
+            <Text style={ticketsAsignadosStyles.statLabel}>En revisión</Text>
+          </View>
+        </View>
+      </View>
+
       {loading ? (
-        <ActivityIndicator size="large" color="#0b3d91" style={{ marginTop: 40 }} />
+        <View style={ticketsAsignadosStyles.loadingContainer}>
+          <ActivityIndicator size="large" color="#10518b" />
+        </View>
       ) : (
         <FlatList
           data={myTickets}
@@ -268,71 +291,90 @@ export default function TicketsAsignados() {
           renderItem={({ item }) => <TicketCard ticket={item} />}
           contentContainerStyle={{ paddingBottom: 40 }}
           ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No tienes tickets asignados aún.</Text>
+            <View style={ticketsAsignadosStyles.emptyContainer}>
+              <Text style={ticketsAsignadosStyles.emptyText}>No tienes tickets asignados aún.</Text>
               <TouchableOpacity onPress={() => router.push('/technician/tickets-disponibles' as any)}>
-                 <Text style={styles.linkText}>Ver tickets disponibles</Text>
+                <Text style={ticketsAsignadosStyles.linkText}>Ver tickets disponibles</Text>
               </TouchableOpacity>
             </View>
           }
-           refreshControl={
-             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor="#5faee3"
+              colors={['#5faee3', '#10518b']}
+            />
           }
         />
       )}
 
       {selectedTicket && (
         <Modal transparent animationType="fade" visible={!!selectedTicket} onRequestClose={handleCloseModal}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <Text style={styles.modalTitle}>{selectedTicket.ticketId}</Text>
+          <View style={ticketsAsignadosStyles.modalOverlay}>
+            <View style={ticketsAsignadosStyles.modalContent}>
+              <ScrollView 
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={ticketsAsignadosStyles.scrollContent}
+              >
+                <Text style={ticketsAsignadosStyles.modalTitle}>{selectedTicket.ticketId}</Text>
 
-                <Text style={styles.sectionTitle}>Información del Usuario</Text>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Nombre:</Text>
-                  <Text style={styles.detailValue}>{selectedTicket.userInfo?.nombre1} {selectedTicket.userInfo?.apellido1}</Text>
+                <Text style={ticketsAsignadosStyles.sectionTitle}>Información del Usuario</Text>
+                <View style={ticketsAsignadosStyles.detailRow}>
+                  <Text style={ticketsAsignadosStyles.detailLabel}>Nombre:</Text>
+                  <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.userInfo?.nombre1} {selectedTicket.userInfo?.apellido1}</Text>
                 </View>
-                <View style={styles.detailRow}>
-                   <Text style={styles.detailLabel}>Cédula:</Text>
-                   <Text style={styles.detailValue}>{selectedTicket.userInfo?.cedula}</Text>
+                <View style={ticketsAsignadosStyles.detailRow}>
+                   <Text style={ticketsAsignadosStyles.detailLabel}>Cédula:</Text>
+                   <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.userInfo?.cedula}</Text>
                 </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Teléfono:</Text>
-                  <Text style={styles.detailValue}>{selectedTicket.userInfo?.telefono}</Text>
+                <View style={ticketsAsignadosStyles.detailRow}>
+                  <Text style={ticketsAsignadosStyles.detailLabel}>Teléfono:</Text>
+                  <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.userInfo?.telefono}</Text>
                 </View>
-                <View style={styles.detailRow}>
-                   <Text style={styles.detailLabel}>Dirección:</Text>
-                   <Text style={styles.detailValue}>{selectedTicket.userInfo?.direccion}</Text>
-                </View>
-
-                <Text style={styles.sectionTitle}>Información del Dispositivo</Text>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Marca:</Text>
-                  <Text style={styles.detailValue}>{selectedTicket.deviceInfo.marca}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Modelo:</Text>
-                  <Text style={styles.detailValue}>{selectedTicket.deviceInfo.modelo}</Text>
+                <View style={ticketsAsignadosStyles.detailRow}>
+                   <Text style={ticketsAsignadosStyles.detailLabel}>Dirección:</Text>
+                   <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.userInfo?.direccion}</Text>
                 </View>
 
-                <Text style={styles.sectionTitle}>Descripción del Problema</Text>
-                <View style={styles.problemBox}>
-                  <Text style={styles.problemDetailText}>{selectedTicket.problema}</Text>
+                <Text style={ticketsAsignadosStyles.sectionTitle}>Información del Dispositivo</Text>
+                <View style={ticketsAsignadosStyles.detailRow}>
+                  <Text style={ticketsAsignadosStyles.detailLabel}>Marca:</Text>
+                  <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.deviceInfo.marca}</Text>
+                </View>
+                <View style={ticketsAsignadosStyles.detailRow}>
+                  <Text style={ticketsAsignadosStyles.detailLabel}>Modelo:</Text>
+                  <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.deviceInfo.modelo}</Text>
+                </View>
+                <View style={ticketsAsignadosStyles.detailRow}>
+                  <Text style={ticketsAsignadosStyles.detailLabel}>Tipo:</Text>
+                  <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.deviceInfo.tipoDispositivo}</Text>
+                </View>
+                <View style={ticketsAsignadosStyles.detailRow}>
+                  <Text style={ticketsAsignadosStyles.detailLabel}>N° Serie:</Text>
+                  <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.deviceInfo.numeroSerie || 'N/A'}</Text>
                 </View>
 
-                <Text style={styles.sectionTitle}>Cambiar Estado</Text>
-                <View style={styles.buttonGrid}>
+                <Text style={ticketsAsignadosStyles.sectionTitle}>Descripción del Problema</Text>
+                <View style={ticketsAsignadosStyles.problemBox}>
+                  <Text style={ticketsAsignadosStyles.problemDetailText}>{selectedTicket.problema}</Text>
+                </View>
+
+                <Text style={ticketsAsignadosStyles.sectionTitle}>Cambiar Estado</Text>
+                <View style={ticketsAsignadosStyles.buttonGrid}>
                   {(['pendiente', 'en_revision', 'reparado', 'cerrado'] as TicketStatus[]).map(status => (
                     <TouchableOpacity
                       key={status}
                       style={[
-                        styles.stateButton,
-                        (newStatus || selectedTicket.estado) === status && styles.stateButtonActive
+                        ticketsAsignadosStyles.stateButton,
+                        (newStatus || selectedTicket.estado) === status && ticketsAsignadosStyles.stateButtonActive
                       ]}
                       onPress={() => setNewStatus(status)}
                     >
-                      <Text style={[styles.stateButtonText, (newStatus || selectedTicket.estado) === status && styles.stateButtonTextActive]}>
+                      <Text style={[
+                        ticketsAsignadosStyles.stateButtonText, 
+                        (newStatus || selectedTicket.estado) === status && ticketsAsignadosStyles.stateButtonTextActive
+                      ]}>
                         {status.replace('_', ' ')}
                       </Text>
                     </TouchableOpacity>
@@ -340,46 +382,49 @@ export default function TicketsAsignados() {
                 </View>
 
                 {isClosing && (
-                  <View style={styles.closingFieldsContainer}>
-                    <Text style={styles.helperText}>Complete los datos para cerrar el ticket:</Text>
+                  <View style={ticketsAsignadosStyles.closingFieldsContainer}>
+                    <Text style={ticketsAsignadosStyles.helperText}>Complete los datos para cerrar el ticket:</Text>
                     
-                    <Text style={styles.inputLabel}>Observaciones del Técnico *</Text>
+                    <Text style={ticketsAsignadosStyles.inputLabel}>Observaciones del Técnico *</Text>
                     <TextInput
-                      style={[styles.input, styles.textArea]}
+                      style={[ticketsAsignadosStyles.input, ticketsAsignadosStyles.textArea]}
                       placeholder="Detalles de la reparación realizada..."
                       multiline
                       numberOfLines={3}
                       value={observaciones}
                       onChangeText={setObservaciones}
+                      placeholderTextColor="#94a3b8"
                     />
 
-                    <View style={styles.rowInputs}>
+                    <View style={ticketsAsignadosStyles.rowInputs}>
                       <View style={{ flex: 1, marginRight: 8 }}>
-                        <Text style={styles.inputLabel}>Costo Total ($) *</Text>
+                        <Text style={ticketsAsignadosStyles.inputLabel}>Costo Total ($) *</Text>
                         <TextInput
-                          style={styles.input}
+                          style={ticketsAsignadosStyles.input}
                           placeholder="0.00"
                           keyboardType="numeric"
                           value={costoTotal}
                           onChangeText={setCostoTotal}
+                          placeholderTextColor="#94a3b8"
                         />
                       </View>
                       <View style={{ flex: 1, marginLeft: 8 }}>
-                        <Text style={styles.inputLabel}>Abono ($) *</Text>
+                        <Text style={ticketsAsignadosStyles.inputLabel}>Abono ($) *</Text>
                         <TextInput
-                          style={styles.input}
+                          style={ticketsAsignadosStyles.input}
                           placeholder="0.00"
                           keyboardType="numeric"
                           value={abono}
                           onChangeText={setAbono}
+                          placeholderTextColor="#94a3b8"
                         />
                       </View>
                     </View>
 
-                    <View style={styles.saldoContainer}>
-                      <Text style={styles.saldoLabel}>Saldo Pendiente:</Text>
+                    <View style={ticketsAsignadosStyles.saldoContainer}>
+                      <Text style={ticketsAsignadosStyles.saldoLabel}>Saldo Pendiente:</Text>
                       <Text style={[
-                        styles.saldoValue, 
+                        ticketsAsignadosStyles.saldoValue, 
                         parseFloat(saldoPendiente) > 0 ? { color: '#ef4444' } : { color: '#10b981' }
                       ]}>
                         ${saldoPendiente}
@@ -388,33 +433,42 @@ export default function TicketsAsignados() {
                   </View>
                 )}
 
-                <Text style={styles.sectionTitle}>Cambiar Prioridad</Text>
-                <View style={styles.buttonGrid}>
+                <Text style={ticketsAsignadosStyles.sectionTitle}>Cambiar Prioridad</Text>
+                <View style={ticketsAsignadosStyles.buttonGrid}>
                   {(['baja', 'media', 'alta'] as Priority[]).map(priority => (
                     <TouchableOpacity
                       key={priority}
                       style={[
-                        styles.priorityButton,
-                        (newPriority || selectedTicket.prioridad) === priority && styles.priorityButtonActive
+                        ticketsAsignadosStyles.priorityButton,
+                        (newPriority || selectedTicket.prioridad) === priority && ticketsAsignadosStyles.priorityButtonActive
                       ]}
                       onPress={() => setNewPriority(priority)}
                     >
-                      <Text style={[styles.priorityButtonText, (newPriority || selectedTicket.prioridad) === priority && styles.priorityButtonTextActive]}>
+                      <Text style={[
+                        ticketsAsignadosStyles.priorityButtonText, 
+                        (newPriority || selectedTicket.prioridad) === priority && ticketsAsignadosStyles.priorityButtonTextActive
+                      ]}>
                         {priority}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
 
-                <Text style={styles.technicianLabel}>Técnico Asignado: {selectedTicket.tecnicoAsignado}</Text>
+                <Text style={ticketsAsignadosStyles.technicianLabel}>Técnico Asignado: {selectedTicket.tecnicoAsignado}</Text>
               </ScrollView>
 
-              <View style={styles.modalActions}>
-                <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={handleCloseModal}>
-                  <Text style={styles.cancelButtonText}>Cancelar</Text>
+              <View style={ticketsAsignadosStyles.modalActions}>
+                <TouchableOpacity 
+                  style={[ticketsAsignadosStyles.modalButton, ticketsAsignadosStyles.cancelButton]} 
+                  onPress={handleCloseModal}
+                >
+                  <Text style={ticketsAsignadosStyles.cancelButtonText}>Cancelar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleSaveChanges}>
-                  <Text style={styles.saveButtonText}>Guardar Cambios</Text>
+                <TouchableOpacity 
+                  style={[ticketsAsignadosStyles.modalButton, ticketsAsignadosStyles.saveButton]} 
+                  onPress={handleSaveChanges}
+                >
+                  <Text style={ticketsAsignadosStyles.saveButtonText}>Guardar Cambios</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -424,67 +478,3 @@ export default function TicketsAsignados() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f8fafc' },
-  title: { fontSize: 22, fontWeight: '700', marginBottom: 12, color: '#0f172a' },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 60 },
-  emptyText: { fontSize: 16, color: '#94a3b8' },
-  linkText: { fontSize: 16, color: '#0b3d91', fontWeight: '600', marginTop: 10 },
-  
-  card: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 12, shadowColor: 'rgba(15,23,42,0.06)', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 10, elevation: 3 },
-  ticketHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  ticketId: { fontWeight: '700', color: '#0f172a', fontSize: 16 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center' },
-  statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 8 },
-  statusText: { fontSize: 12, color: '#64748b', textTransform: 'capitalize' },
-  deviceText: { color: '#374151', fontWeight: '600', marginBottom: 6 },
-  userText: { color: '#64748b', marginBottom: 6 },
-  problemText: { color: '#94a3b8', lineHeight: 18 },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, alignItems: 'center' },
-  dateText: { color: '#94a3b8', fontSize: 12 },
-  priorityText: { fontWeight: '700', fontSize: 12 },
-  assignedBadge: { alignSelf: 'flex-start', backgroundColor: '#e6f0ff', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, marginTop: 12 },
-  assignedText: { color: '#0b3d91', fontWeight: '600', fontSize: 12 },
-
-  // Modal styles
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, maxHeight: '90%' },
-  modalTitle: { fontSize: 24, fontWeight: '800', color: '#0f172a', marginBottom: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#0f172a', marginTop: 16, marginBottom: 10 },
-  detailRow: { flexDirection: 'row', marginBottom: 10 },
-  detailLabel: { fontSize: 14, fontWeight: '600', color: '#374151', width: 90 },
-  detailValue: { fontSize: 14, color: '#64748b', flex: 1 },
-  problemBox: { backgroundColor: '#f8fafc', padding: 12, borderRadius: 8, marginBottom: 12 },
-  problemDetailText: { fontSize: 14, color: '#64748b' },
-  
-  buttonGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
-  stateButton: { flexGrow: 1, minWidth: '45%', paddingVertical: 12, paddingHorizontal: 12, backgroundColor: '#f1f5f9', borderRadius: 8, borderWidth: 2, borderColor: '#f1f5f9', alignItems: 'center' },
-  stateButtonActive: { backgroundColor: '#e6f0ff', borderColor: '#0b3d91' },
-  stateButtonText: { color: '#374151', fontWeight: '600', textTransform: 'capitalize' },
-  stateButtonTextActive: { color: '#0b3d91', fontWeight: '700' },
-  
-  priorityButton: { flexGrow: 1, minWidth: '30%', paddingVertical: 12, backgroundColor: '#f1f5f9', borderRadius: 8, borderWidth: 2, borderColor: '#f1f5f9', alignItems: 'center' },
-  priorityButtonActive: { backgroundColor: '#e6f0ff', borderColor: '#0b3d91' },
-  priorityButtonText: { color: '#374151', fontWeight: '600', textTransform: 'capitalize' },
-  priorityButtonTextActive: { color: '#0b3d91', fontWeight: '700' },
-  
-  technicianLabel: { fontSize: 14, color: '#374151', fontWeight: '600', marginTop: 20, marginBottom: 20 },
-  modalActions: { flexDirection: 'row', gap: 12, marginTop: 16 },
-  modalButton: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  cancelButton: { backgroundColor: '#f1f5f9', borderWidth: 1, borderColor: '#cbd5e1' },
-  cancelButtonText: { color: '#64748b', fontWeight: '700', fontSize: 16 },
-  saveButton: { backgroundColor: '#10b981' },
-  saveButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-
-  // Estilos Campos Cierre
-  closingFieldsContainer: { marginTop: 15, marginBottom: 5, borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 15 },
-  helperText: { fontSize: 13, color: '#64748b', marginBottom: 10, fontStyle: 'italic' },
-  inputLabel: { fontSize: 14, fontWeight: '600', color: '#334155', marginBottom: 6 },
-  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#334155', marginBottom: 12 },
-  textArea: { height: 80, textAlignVertical: 'top' },
-  rowInputs: { flexDirection: 'row', justifyContent: 'space-between' },
-  saldoContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f8fafc', padding: 10, borderRadius: 8, marginTop: 4 },
-  saldoLabel: { fontSize: 14, fontWeight: '700', color: '#0f172a' },
-  saldoValue: { fontSize: 18, fontWeight: '800' },
-});

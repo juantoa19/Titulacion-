@@ -11,18 +11,12 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-<<<<<<< HEAD
   Dimensions,
   Easing,
   ScrollView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/_AuthContext'; 
-=======
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../context/_AuthContext';
->>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import loginStyles from './styles/login.styles';
@@ -115,10 +109,6 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login({ email, password });
-<<<<<<< HEAD
-=======
-
->>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
     } catch (error: any) {
       console.error(error);
       Alert.alert('Error', 'Credenciales incorrectas o error de conexión');
@@ -295,7 +285,6 @@ export default function LoginScreen() {
                   loading && loginStyles.buttonDisabled,
                   (!email || !password) && loginStyles.buttonDisabled
                 ]}
-<<<<<<< HEAD
                 onPress={handleLogin}
                 disabled={loading || !email || !password}
                 activeOpacity={0.7}
@@ -323,69 +312,6 @@ export default function LoginScreen() {
                     {'  '}INICIAR SESIÓN
                   </Text>
                 )}
-=======
-                placeholder="tu@email.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                onFocus={() => handleFocus('email')}
-                onBlur={() => handleBlur('email')}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Contraseña</Text>
-
-              <View style={styles.passwordContainer}>
-                <TextInput
-                  style={[
-                    styles.input,
-                    styles.passwordInput,
-                    isFocused.password && styles.inputFocused
-                  ]}
-                  placeholder="••••••••"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  onFocus={() => handleFocus('password')}
-                  onBlur={() => handleBlur('password')}
-                />
-
-                <TouchableOpacity
-                  style={styles.eyeButton}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  <Ionicons
-                    name={showPassword ? 'eye-off' : 'eye'}
-                    size={22}
-                    color="#64748b"
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.button,
-                loading && styles.buttonDisabled,
-                (!email || !password) && styles.buttonDisabled
-              ]}
-              onPress={handleLogin}
-              disabled={loading || !email || !password}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <Text style={styles.buttonText}>Iniciar Sesión</Text>
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>¿Trabajas aquí? </Text>
-              <TouchableOpacity onPress={() => router.push('/auth/register')}>
-                <Text style={styles.registerLink}>Regístrate aquí</Text>
->>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585
               </TouchableOpacity>
 
               {/* Sección de credenciales de prueba */}
@@ -436,149 +362,4 @@ export default function LoginScreen() {
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
-<<<<<<< HEAD
 }
-=======
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  inner: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#1e293b',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#64748b',
-  },
-  formContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
-    fontSize: 16,
-    color: '#1e293b',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  inputFocused: {
-    borderColor: '#3b82f6',
-    shadowColor: '#3b82f6',
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  button: {
-    backgroundColor: '#3b82f6',
-    padding: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  buttonDisabled: {
-    backgroundColor: '#cbd5e1',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  demoContainer: {
-    marginTop: 24,
-    padding: 16,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-  },
-  demoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 8,
-  },
-  demoText: {
-    fontSize: 12,
-    color: '#64748b',
-    marginBottom: 2,
-  },
-  registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  registerText: {
-    color: '#64748b',
-    fontSize: 14,
-  },
-  registerLink: {
-    color: '#3b82f6',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  passwordInput: {
-    flex: 1,
-    paddingRight: 50, // espacio para el icono
-  },
-
-  eyeButton: {
-    position: 'absolute',
-    right: 16,
-  },
-
-  eyeText: {
-    fontSize: 18,
-  },
-});
->>>>>>> cd69528c19660d53c85ba95a0d01216fb434a585

@@ -12,10 +12,23 @@ export default function AdminDashboard() {
   return (
     <ScrollView style={adminStyles.container}>
       {/* Header con gradiente */}
-      <View style={adminStyles.header}>
-        <Text style={adminStyles.title}>Panel de Administrador</Text>
-        <Text style={adminStyles.subtitle}>Hola, {user?.name || 'Admin'} 👋</Text>
+   <View style={adminStyles.header}>
+  <View style={adminStyles.headerBackground} />
+  <View style={adminStyles.headerContent}>
+    <View style={adminStyles.welcomeContainer}>
+      <View style={adminStyles.userAvatar}>
+        <Text style={adminStyles.userAvatarText}>
+          {user?.name?.charAt(0).toUpperCase() || 'A'}
+        </Text>
       </View>
+      <Text style={adminStyles.title}>Panel de Administrador</Text>
+      <Text style={adminStyles.subtitle}>Hola, {user?.name || 'Admin'} 👋</Text>
+      <View style={adminStyles.adminBadge}>
+        <Text style={adminStyles.adminBadgeText}>Administrador</Text>
+      </View>
+    </View>
+  </View>
+</View>
 
       <View style={adminStyles.menuContainer}>
         {/* 1. Gestión de Usuarios */}

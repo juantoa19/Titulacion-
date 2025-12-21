@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from 'react-native';
 import { useAuth, TicketFormData } from '../context/_AuthContext';
 import { searchClientByCedula } from '../services/api'; // Importamos la nueva función
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import createTicketStyles from './styles/create-ticket.styles';
 
 export default function CreateTicketReceptionist() {
   const { createTicket } = useAuth();
@@ -26,6 +27,10 @@ export default function CreateTicketReceptionist() {
   const [descripcion, setDescripcion] = useState('');
   
   const [loading, setLoading] = useState(false);
+
+  // Errores de validación (solo datos del cliente)
+  const [cedulaError, setCedulaError] = useState<string | null>(null);
+  const [nombreError, setNombreError] = useState<string | null>(null);
 
   // --- LÓGICA DE BÚSQUEDA DE CLIENTE ---
   const handleSearchClient = async () => {
@@ -64,14 +69,39 @@ export default function CreateTicketReceptionist() {
     }
   };
 
+  // Valida únicamente los campos del cliente
+  const validateClient = () => {
+    let ok = true;
+    setCedulaError(null);
+    setNombreError(null);
+
+    // Cédula: obligatoria y numérica (mín. 10 dígitos)
+    if (!cedula || cedula.trim().length === 0) {
+      setCedulaError('La cédula es obligatoria');
+      ok = false;
+    } else if (!/^\d+$/.test(cedula) || cedula.trim().length < 10) {
+      setCedulaError('Ingresa una cédula válida (mín. 10 dígitos)');
+      ok = false;
+    }
+
+    // Nombre: obligatorio
+    if (!nombre || nombre.trim().length === 0) {
+      setNombreError('El nombre es obligatorio');
+      ok = false;
+    }
+
+    return ok;
+  };
+
   const onSubmit = async () => {
-    // Validamos campos obligatorios (Cliente + Dispositivo)
-    if (!cedula || !nombre || !tipo || !marca || !modelo || !descripcion) {
-      Alert.alert('Error', 'Por favor completa todos los campos obligatorios (*).');
+    // Validamos SOLO los campos del cliente
+    if (!validateClient()) {
+      Alert.alert('Error', 'Por favor corrige los errores en los datos del cliente.');
       return;
     }
+
     setLoading(true);
-    
+
     // Construimos el objeto con la estructura NUEVA
     const formData: TicketFormData = {
       // Cliente
@@ -79,8 +109,8 @@ export default function CreateTicketReceptionist() {
       cliente_nombre: nombre,
       cliente_direccion: direccion,
       cliente_celular: celular,
-      
-      // Dispositivo
+
+      // Dispositivo (opcionales)
       tipo_dispositivo: tipo,
       marca: marca,
       modelo: modelo,
@@ -107,34 +137,36 @@ export default function CreateTicketReceptionist() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Recepción de Equipo</Text>
-        <Text style={styles.subtitle}>Datos del Cliente y Dispositivo</Text>
+    <ScrollView contentContainerStyle={createTicketStyles.container}>
+      <View style={createTicketStyles.header}>
+        <Text style={createTicketStyles.title}>Recepción de Equipo</Text>
+        <Text style={createTicketStyles.subtitle}>Datos del Cliente y Dispositivo</Text>
       </View>
 
-      <View style={styles.form}>
+      <View style={createTicketStyles.form}>
         
         {/* --- SECCIÓN 1: DATOS DEL CLIENTE --- */}
-        <Text style={styles.sectionTitle}>1. Datos del Cliente</Text>
+        <Text style={createTicketStyles.sectionTitle}>1. Datos del Cliente</Text>
         
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Cédula / DNI <Text style={styles.required}>*</Text></Text>
-          <View style={styles.searchRow}>
+        <View style={createTicketStyles.inputGroup}>
+          <Text style={createTicketStyles.label}>Cédula / DNI <Text style={createTicketStyles.required}>*</Text></Text>
+          <View style={createTicketStyles.searchRow}>
             <TextInput 
-              style={[styles.input, styles.searchInput]} 
+              style={[createTicketStyles.input, createTicketStyles.searchInput, cedulaError && createTicketStyles.inputErrorBorder]} 
               value={cedula} 
               onChangeText={(text) => {
                 setCedula(text);
                 // Si cambia la cédula, reseteamos el bloqueo por seguridad
                 if(isNameLocked) setIsNameLocked(false); 
+                if (cedulaError) setCedulaError(null);
               }} 
               placeholder="1720..." 
               keyboardType="numeric"
               placeholderTextColor="#94a3b8"
             />
+            {cedulaError ? <Text style={createTicketStyles.errorText}>{cedulaError}</Text> : null}
             <TouchableOpacity 
-              style={styles.searchButton} 
+              style={createTicketStyles.searchButton} 
               onPress={handleSearchClient}
               disabled={searchingClient}
             >
@@ -147,24 +179,25 @@ export default function CreateTicketReceptionist() {
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nombre Completo <Text style={styles.required}>*</Text></Text>
+        <View style={createTicketStyles.inputGroup}>
+          <Text style={createTicketStyles.label}>Nombre Completo <Text style={createTicketStyles.required}>*</Text></Text>
           <TextInput 
-            style={[styles.input, isNameLocked && styles.inputLocked]} 
+            style={[createTicketStyles.input, isNameLocked && createTicketStyles.inputLocked, nombreError && createTicketStyles.inputErrorBorder]} 
             value={nombre} 
-            onChangeText={setNombre} 
+            onChangeText={(text) => { setNombre(text); if (nombreError) setNombreError(null); }} 
             placeholder="Nombre del cliente" 
             placeholderTextColor="#94a3b8"
             editable={!isNameLocked} // Aquí ocurre la magia del bloqueo
           />
-          {isNameLocked && <Text style={styles.helperText}>🔒 Nombre cargado del sistema</Text>}
+          {isNameLocked && <Text style={createTicketStyles.helperText}>🔒 Nombre cargado del sistema</Text>}
+          {nombreError ? <Text style={createTicketStyles.errorText}>{nombreError}</Text> : null}
         </View>
 
-        <View style={styles.row}>
-          <View style={[styles.inputGroup, styles.halfInput]}>
-            <Text style={styles.label}>Celular</Text>
+        <View style={createTicketStyles.row}>
+          <View style={[createTicketStyles.inputGroup, createTicketStyles.halfInput]}>
+            <Text style={createTicketStyles.label}>Celular</Text>
             <TextInput 
-              style={styles.input} 
+              style={createTicketStyles.input} 
               value={celular} 
               onChangeText={setCelular} 
               placeholder="099..." 
@@ -172,10 +205,10 @@ export default function CreateTicketReceptionist() {
               placeholderTextColor="#94a3b8"
             />
           </View>
-          <View style={[styles.inputGroup, styles.halfInput]}>
-            <Text style={styles.label}>Dirección</Text>
+          <View style={[createTicketStyles.inputGroup, createTicketStyles.halfInput]}>
+            <Text style={createTicketStyles.label}>Dirección</Text>
             <TextInput 
-              style={styles.input} 
+              style={createTicketStyles.input} 
               value={direccion} 
               onChangeText={setDireccion} 
               placeholder="Av..." 
@@ -184,15 +217,15 @@ export default function CreateTicketReceptionist() {
           </View>
         </View>
 
-        <View style={styles.divider} />
+        <View style={createTicketStyles.divider} />
 
         {/* --- SECCIÓN 2: DATOS DEL DISPOSITIVO --- */}
-        <Text style={styles.sectionTitle}>2. Datos del Equipo</Text>
+        <Text style={createTicketStyles.sectionTitle}>2. Datos del Equipo</Text>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Tipo de dispositivo <Text style={styles.required}>*</Text></Text>
+        <View style={createTicketStyles.inputGroup}>
+          <Text style={createTicketStyles.label}>Tipo de dispositivo <Text style={createTicketStyles.required}>*</Text></Text>
           <TextInput 
-            style={styles.input} 
+            style={createTicketStyles.input} 
             value={tipo} 
             onChangeText={setTipo} 
             placeholder="Ej. Celular, Laptop" 
@@ -200,21 +233,21 @@ export default function CreateTicketReceptionist() {
           />
         </View>
 
-        <View style={styles.row}>
-          <View style={[styles.inputGroup, styles.halfInput]}>
-            <Text style={styles.label}>Marca <Text style={styles.required}>*</Text></Text>
+        <View style={createTicketStyles.row}>
+          <View style={[createTicketStyles.inputGroup, createTicketStyles.halfInput]}>
+            <Text style={createTicketStyles.label}>Marca <Text style={createTicketStyles.required}>*</Text></Text>
             <TextInput 
-              style={styles.input} 
+              style={createTicketStyles.input} 
               value={marca} 
               onChangeText={setMarca} 
               placeholder="Ej. Samsung" 
               placeholderTextColor="#94a3b8"
             />
           </View>
-          <View style={[styles.inputGroup, styles.halfInput]}>
-            <Text style={styles.label}>Modelo <Text style={styles.required}>*</Text></Text>
+          <View style={[createTicketStyles.inputGroup, createTicketStyles.halfInput]}>
+            <Text style={createTicketStyles.label}>Modelo <Text style={createTicketStyles.required}>*</Text></Text>
             <TextInput 
-              style={styles.input} 
+              style={createTicketStyles.input} 
               value={modelo} 
               onChangeText={setModelo} 
               placeholder="Ej. S21" 
@@ -223,10 +256,10 @@ export default function CreateTicketReceptionist() {
           </View>
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Número de serie</Text>
+        <View style={createTicketStyles.inputGroup}>
+          <Text style={createTicketStyles.label}>Número de serie</Text>
           <TextInput 
-            style={styles.input} 
+            style={createTicketStyles.input} 
             value={numeroSerie} 
             onChangeText={setNumeroSerie} 
             placeholder="SN..." 
@@ -234,10 +267,10 @@ export default function CreateTicketReceptionist() {
           />
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Problema reportado <Text style={styles.required}>*</Text></Text>
+        <View style={createTicketStyles.inputGroup}>
+          <Text style={createTicketStyles.label}>Problema reportado <Text style={createTicketStyles.required}>*</Text></Text>
           <TextInput
-            style={[styles.input, styles.textarea]}
+            style={[createTicketStyles.input, createTicketStyles.textarea]}
             value={descripcion}
             onChangeText={setDescripcion}
             placeholder="Describe el fallo..."
@@ -248,29 +281,29 @@ export default function CreateTicketReceptionist() {
           />
         </View>
 
-        <View style={styles.actions}>
+        <View style={createTicketStyles.actions}>
           <TouchableOpacity 
-            style={[styles.button, styles.cancel]} 
+            style={[createTicketStyles.button, createTicketStyles.cancel]} 
             onPress={() => router.back()}
             disabled={loading}
           >
-            <Text style={styles.cancelText}>Cancelar</Text>
+            <Text style={createTicketStyles.cancelText}>Cancelar</Text>
           </TouchableOpacity>
 
             <TouchableOpacity
               style={[
-                styles.button, 
-                styles.primary,
-                (loading || !cedula || !nombre || !descripcion) && styles.disabledButton
+                createTicketStyles.button, 
+                createTicketStyles.primary,
+                (loading || !cedula || !nombre) && createTicketStyles.disabledButton
               ]}
               onPress={onSubmit}
-              disabled={loading}
+              disabled={loading || !cedula || !nombre}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
                 <>
-                  <Text style={styles.primaryText}>Crear Ticket</Text>
+                  <Text style={createTicketStyles.primaryText}>Crear Ticket</Text>
                   <Ionicons name="save-outline" size={18} color="#fff" />
                 </>
               )}
@@ -280,91 +313,3 @@ export default function CreateTicketReceptionist() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { 
-    backgroundColor: '#f1f5f9', 
-    flexGrow: 1,
-    paddingBottom: 40,
-  },
-  header: {
-    backgroundColor: '#fff',
-    padding: 20,
-    paddingTop: 40,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 5,
-    marginBottom: 10,
-    alignItems: 'center'
-  },
-  title: { fontSize: 22, fontWeight: '800', color: '#1e293b' },
-  subtitle: { fontSize: 14, color: '#64748b' },
-  
-  form: { padding: 20 },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#3b82f6',
-    marginBottom: 15,
-    marginTop: 5,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#e2e8f0',
-    marginVertical: 20,
-  },
-  
-  inputGroup: { marginBottom: 15 },
-  row: { flexDirection: 'row', gap: 10 },
-  halfInput: { flex: 1 },
-  label: { fontSize: 14, color: '#475569', marginBottom: 6, fontWeight: '600' },
-  required: { color: '#ef4444' },
-  
-  input: {
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
-    color: '#0f172a',
-  },
-  // Estilo para cuando el input está bloqueado
-  inputLocked: {
-    backgroundColor: '#e2e8f0', // Grisáceo
-    color: '#64748b',
-  },
-  helperText: {
-    fontSize: 12,
-    color: '#059669', // Verde
-    marginTop: 4,
-    fontStyle: 'italic',
-  },
-  
-  // Estilos de la barra de búsqueda
-  searchRow: { flexDirection: 'row', gap: 10 },
-  searchInput: { flex: 1 },
-  searchButton: {
-    backgroundColor: '#3b82f6',
-    width: 50,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  textarea: { minHeight: 100 },
-  
-  actions: { flexDirection: 'row', gap: 15, marginTop: 20 },
-  button: { 
-    flex: 1, padding: 16, borderRadius: 10, 
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 
-  },
-  cancel: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#cbd5e1' },
-  primary: { backgroundColor: '#0f172a' },
-  disabledButton: { opacity: 0.6 },
-  
-  cancelText: { fontWeight: '600', color: '#64748b' },
-  primaryText: { fontWeight: '600', color: '#fff' },
-});
