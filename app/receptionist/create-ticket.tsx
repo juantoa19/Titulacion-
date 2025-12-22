@@ -25,6 +25,7 @@ export default function CreateTicketReceptionist() {
   const [modelo, setModelo] = useState('');
   const [numeroSerie, setNumeroSerie] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [prioridad, setPrioridad] = useState<'baja' | 'media' | 'alta'>('baja');
   
   const [loading, setLoading] = useState(false);
 
@@ -115,7 +116,8 @@ export default function CreateTicketReceptionist() {
       marca: marca,
       modelo: modelo,
       numero_serie: numeroSerie || null,
-      descripcion_problema: descripcion
+      descripcion_problema: descripcion,
+      prioridad: prioridad
     };
 
     try {
@@ -279,6 +281,30 @@ export default function CreateTicketReceptionist() {
             numberOfLines={4}
             textAlignVertical="top"
           />
+        </View>
+
+        <View style={createTicketStyles.inputGroup}>
+          <Text style={createTicketStyles.priorityLabel}>Prioridad de la reparación</Text>
+          <View style={createTicketStyles.priorityContainer}>
+            {(['baja', 'media', 'alta'] as const).map((p) => (
+              <TouchableOpacity
+                key={p}
+                style={[
+                  createTicketStyles.priorityButton,
+                  prioridad === p && createTicketStyles.priorityButtonActive
+                ]}
+                onPress={() => setPrioridad(p)}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  createTicketStyles.priorityText,
+                  prioridad === p && createTicketStyles.priorityTextActive
+                ]}>
+                  {p}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <View style={createTicketStyles.actions}>

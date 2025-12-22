@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  Alert, 
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
   ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
@@ -18,7 +18,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import registerStyles from './styles/register.styles';
-import { useAuth, RegisterData } from '../context/_AuthContext'; 
+import { useAuth, RegisterData } from '../context/_AuthContext';
 import { router } from 'expo-router';
 
 
@@ -28,6 +28,8 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [nombre1, setNombre1] = useState('');
   const [nombre2, setNombre2] = useState('');
   const [apellido1, setApellido1] = useState('');
@@ -133,7 +135,7 @@ export default function RegisterScreen() {
       return;
     }
 
-    if (password.length < 8) { 
+    if (password.length < 8) {
       Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres');
       return;
     }
@@ -144,7 +146,7 @@ export default function RegisterScreen() {
     }
 
     setLoading(true);
-    
+
     const formData: RegisterData = {
       name: nombre1,
       nombre2: nombre2 || null,
@@ -161,7 +163,7 @@ export default function RegisterScreen() {
     try {
       await register(formData);
       Alert.alert(
-        '🎉 ¡Cuenta Creada!', 
+        '🎉 ¡Cuenta Creada!',
         'Tu cuenta ha sido creada exitosamente. Redirigiendo al Login...',
         [
           {
@@ -237,7 +239,7 @@ export default function RegisterScreen() {
   const isFormValid = email && password && confirmPassword && nombre1 && apellido1 && cedula && telefono && password === confirmPassword && password.length >= 8;
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       style={registerStyles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
@@ -251,22 +253,22 @@ export default function RegisterScreen() {
 
       {/* Elementos flotantes animados */}
       <View style={registerStyles.floatingElements}>
-        <Animated.View 
+        <Animated.View
           style={[
             registerStyles.floatingShape1,
             { transform: [{ translateY: floatingTranslateY1 }] }
-          ]} 
+          ]}
         />
-        <Animated.View 
+        <Animated.View
           style={[
             registerStyles.floatingShape2,
             { transform: [{ translateY: floatingTranslateY2 }] }
-          ]} 
+          ]}
         />
       </View>
 
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView 
+        <ScrollView
           style={registerStyles.scrollView}
           contentContainerStyle={registerStyles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -275,7 +277,7 @@ export default function RegisterScreen() {
             {/* Header */}
             <View style={registerStyles.header}>
               {/* Logo animado giratorio */}
-              <Animated.View 
+              <Animated.View
                 style={[
                   registerStyles.logoContainer,
                   { transform: [{ rotate: logoRotation }] }
@@ -289,9 +291,9 @@ export default function RegisterScreen() {
               <Animated.Text
                 style={[
                   registerStyles.title,
-                  { 
+                  {
                     transform: [{ scale: titleScale }],
-                    opacity: titleAnim 
+                    opacity: titleAnim
                   }
                 ]}
               >
@@ -316,31 +318,31 @@ export default function RegisterScreen() {
               ]} />
               <View style={[
                 registerStyles.stepIndicator,
-                accountInfoComplete ? registerStyles.stepIndicatorCompleted : 
-                (personalInfoComplete ? registerStyles.stepIndicatorActive : {})
+                accountInfoComplete ? registerStyles.stepIndicatorCompleted :
+                  (personalInfoComplete ? registerStyles.stepIndicatorActive : {})
               ]}>
                 <Text style={registerStyles.stepNumber}>2</Text>
               </View>
               <View style={[
                 registerStyles.progressStep,
-                accountInfoComplete ? registerStyles.progressStepCompleted : 
-                (personalInfoComplete ? registerStyles.progressStepActive : {})
+                accountInfoComplete ? registerStyles.progressStepCompleted :
+                  (personalInfoComplete ? registerStyles.progressStepActive : {})
               ]} />
               <View style={[
                 registerStyles.stepIndicator,
-                isFormValid ? registerStyles.stepIndicatorCompleted : 
-                (accountInfoComplete ? registerStyles.stepIndicatorActive : {})
+                isFormValid ? registerStyles.stepIndicatorCompleted :
+                  (accountInfoComplete ? registerStyles.stepIndicatorActive : {})
               ]}>
                 <Text style={registerStyles.stepNumber}>3</Text>
               </View>
             </View>
 
-            <Animated.View 
+            <Animated.View
               style={[
                 registerStyles.formContainer,
-                { 
+                {
                   transform: [{ translateY: formTranslateY }],
-                  opacity: formAnim 
+                  opacity: formAnim
                 }
               ]}
             >
@@ -348,7 +350,7 @@ export default function RegisterScreen() {
               {/* Información Personal */}
               <View style={registerStyles.sectionTitle}>
                 <Text style={registerStyles.sectionLabel}>
-                  <Ionicons name="person-circle-outline" size={20} color="#10518b" /> 
+                  <Ionicons name="person-circle-outline" size={20} color="#10518b" />
                   {' '}Información Personal
                 </Text>
               </View>
@@ -357,13 +359,13 @@ export default function RegisterScreen() {
               <View style={registerStyles.rowContainer}>
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
-                    <Ionicons name="person" size={16} color="#10518b" /> 
+                    <Ionicons name="person" size={16} color="#10518b" />
                     {' '}Primer Nombre<Text style={registerStyles.requiredStar}> *</Text>
                   </Text>
                   <View style={registerStyles.inputIconContainer}>
                     <Ionicons name="person" size={22} color="#5faeee" />
                   </View>
-                  <TextInput 
+                  <TextInput
                     style={[
                       registerStyles.input,
                       isFocused.nombre1 && registerStyles.inputFocused,
@@ -386,7 +388,7 @@ export default function RegisterScreen() {
                   <View style={registerStyles.inputIconContainer}>
                     <Ionicons name="person-outline" size={22} color="#94a3b8" />
                   </View>
-                  <TextInput 
+                  <TextInput
                     style={[
                       registerStyles.input,
                       isFocused.nombre2 && registerStyles.inputFocused,
@@ -408,13 +410,13 @@ export default function RegisterScreen() {
               <View style={registerStyles.rowContainer}>
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
-                    <Ionicons name="people" size={16} color="#10518b" /> 
+                    <Ionicons name="people" size={16} color="#10518b" />
                     {' '}Primer Apellido<Text style={registerStyles.requiredStar}> *</Text>
                   </Text>
                   <View style={registerStyles.inputIconContainer}>
                     <Ionicons name="people" size={22} color="#5faeee" />
                   </View>
-                  <TextInput 
+                  <TextInput
                     style={[
                       registerStyles.input,
                       isFocused.apellido1 && registerStyles.inputFocused,
@@ -437,7 +439,7 @@ export default function RegisterScreen() {
                   <View style={registerStyles.inputIconContainer}>
                     <Ionicons name="people-outline" size={22} color="#94a3b8" />
                   </View>
-                  <TextInput 
+                  <TextInput
                     style={[
                       registerStyles.input,
                       isFocused.apellido2 && registerStyles.inputFocused,
@@ -459,18 +461,18 @@ export default function RegisterScreen() {
               <View style={registerStyles.rowContainer}>
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
-                    <Ionicons name="card" size={16} color="#10518b" /> 
+                    <Ionicons name="card" size={16} color="#10518b" />
                     {' '}Cédula<Text style={registerStyles.requiredStar}> *</Text>
                   </Text>
                   <View style={registerStyles.inputIconContainer}>
                     <Ionicons name="card" size={22} color="#5faeee" />
                   </View>
-                  <TextInput 
+                  <TextInput
                     style={[
                       registerStyles.input,
                       isFocused.cedula && registerStyles.inputFocused,
-                      cedula && cedula.length === 10 ? registerStyles.inputValid : 
-                      cedula ? registerStyles.inputError : {}
+                      cedula && cedula.length === 10 ? registerStyles.inputValid :
+                        cedula ? registerStyles.inputError : {}
                     ]}
                     placeholder=""
                     placeholderTextColor="#94a3b8"
@@ -488,18 +490,18 @@ export default function RegisterScreen() {
                 </View>
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
-                    <Ionicons name="call" size={16} color="#10518b" /> 
+                    <Ionicons name="call" size={16} color="#10518b" />
                     {' '}Teléfono<Text style={registerStyles.requiredStar}> *</Text>
                   </Text>
                   <View style={registerStyles.inputIconContainer}>
                     <Ionicons name="call" size={22} color="#5faeee" />
                   </View>
-                  <TextInput 
+                  <TextInput
                     style={[
                       registerStyles.input,
                       isFocused.telefono && registerStyles.inputFocused,
-                      telefono && telefono.length === 10 ? registerStyles.inputValid : 
-                      telefono ? registerStyles.inputError : {}
+                      telefono && telefono.length === 10 ? registerStyles.inputValid :
+                        telefono ? registerStyles.inputError : {}
                     ]}
                     placeholder=""
                     placeholderTextColor="#94a3b8"
@@ -520,13 +522,13 @@ export default function RegisterScreen() {
               {/* Dirección */}
               <View style={registerStyles.inputContainer}>
                 <Text style={registerStyles.inputLabel}>
-                  <Ionicons name="location" size={16} color="#10518b" /> 
+                  <Ionicons name="location" size={16} color="#10518b" />
                   {' '}Dirección (Opcional)
                 </Text>
                 <View style={registerStyles.inputIconContainer}>
                   <Ionicons name="location-outline" size={22} color="#94a3b8" />
                 </View>
-                <TextInput 
+                <TextInput
                   style={[
                     registerStyles.input,
                     isFocused.direccion && registerStyles.inputFocused,
@@ -546,7 +548,7 @@ export default function RegisterScreen() {
               {/* Separador */}
               <View style={registerStyles.sectionTitle}>
                 <Text style={registerStyles.sectionLabel}>
-                  <Ionicons name="lock-closed" size={20} color="#10518b" /> 
+                  <Ionicons name="lock-closed" size={20} color="#10518b" />
                   {' '}Información de Cuenta
                 </Text>
               </View>
@@ -554,13 +556,13 @@ export default function RegisterScreen() {
               {/* Input de Email */}
               <View style={registerStyles.inputContainer}>
                 <Text style={registerStyles.inputLabel}>
-                  <Ionicons name="mail" size={16} color="#10518b" /> 
+                  <Ionicons name="mail" size={16} color="#10518b" />
                   {' '}Correo electrónico<Text style={registerStyles.requiredStar}> *</Text>
                 </Text>
                 <View style={registerStyles.inputIconContainer}>
                   <Ionicons name="mail" size={22} color="#5faeee" />
                 </View>
-                <TextInput 
+                <TextInput
                   style={[
                     registerStyles.input,
                     isFocused.email && registerStyles.inputFocused,
@@ -582,28 +584,46 @@ export default function RegisterScreen() {
               {/* Input de Contraseña */}
               <View style={registerStyles.inputContainer}>
                 <Text style={registerStyles.inputLabel}>
-                  <Ionicons name="key" size={16} color="#10518b" /> 
+                  <Ionicons name="key" size={16} color="#10518b" />
                   {' '}Contraseña<Text style={registerStyles.requiredStar}> *</Text>
                 </Text>
                 <View style={registerStyles.inputIconContainer}>
                   <Ionicons name="key" size={22} color="#5faeee" />
                 </View>
-                <TextInput 
+                <TextInput
                   style={[
                     registerStyles.input,
                     isFocused.password && registerStyles.inputFocused,
-                    password && password.length >= 8 ? registerStyles.inputValid : 
-                    password ? registerStyles.inputError : {}
+                    password && password.length >= 8 ? registerStyles.inputValid :
+                      password ? registerStyles.inputError : {},
+                    { paddingRight: 50 } // Espacio para el ícono del ojo
                   ]}
                   placeholder=""
                   placeholderTextColor="#94a3b8"
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry
+
+                  // Lógica de visibilidad
+                  secureTextEntry={!showPassword}
+
                   onFocus={() => handleFocus('password')}
                   onBlur={() => handleBlur('password')}
                   editable={!loading}
                 />
+
+                {/* Botón ver/ocultar contraseña */}
+                <TouchableOpacity
+                  style={registerStyles.eyeIconContainer}
+                  onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={showPassword ? "eye-off" : "eye"}
+                    size={24}
+                    color="#94a3b8"
+                  />
+                </TouchableOpacity>
+
                 {password && password.length < 8 && (
                   <Text style={registerStyles.errorText}>Mínimo 8 caracteres requeridos</Text>
                 )}
@@ -612,28 +632,46 @@ export default function RegisterScreen() {
               {/* Input de Confirmar Contraseña */}
               <View style={registerStyles.inputContainer}>
                 <Text style={registerStyles.inputLabel}>
-                  <Ionicons name="key-outline" size={16} color="#10518b" /> 
+                  <Ionicons name="key-outline" size={16} color="#10518b" />
                   {' '}Confirmar Contraseña<Text style={registerStyles.requiredStar}> *</Text>
                 </Text>
                 <View style={registerStyles.inputIconContainer}>
                   <Ionicons name="key-outline" size={22} color="#5faeee" />
                 </View>
-                <TextInput 
+                <TextInput
                   style={[
                     registerStyles.input,
                     isFocused.confirmPassword && registerStyles.inputFocused,
-                    confirmPassword && password === confirmPassword ? registerStyles.inputValid : 
-                    confirmPassword ? registerStyles.inputError : {}
+                    confirmPassword && password === confirmPassword ? registerStyles.inputValid :
+                      confirmPassword ? registerStyles.inputError : {},
+                    { paddingRight: 50 } // Espacio para el ícono del ojo
                   ]}
                   placeholder=""
                   placeholderTextColor="#94a3b8"
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
-                  secureTextEntry
+
+                  // Lógica de visibilidad independiente
+                  secureTextEntry={!showConfirmPassword}
+
                   onFocus={() => handleFocus('confirmPassword')}
                   onBlur={() => handleBlur('confirmPassword')}
                   editable={!loading}
                 />
+
+                {/* Botón ver/ocultar confirmación */}
+                <TouchableOpacity
+                  style={registerStyles.eyeIconContainer}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={showConfirmPassword ? "eye-off" : "eye"}
+                    size={24}
+                    color="#94a3b8"
+                  />
+                </TouchableOpacity>
+
                 {confirmPassword && password !== confirmPassword && (
                   <Text style={registerStyles.errorText}>Las contraseñas no coinciden</Text>
                 )}
@@ -642,7 +680,7 @@ export default function RegisterScreen() {
               {/* Requisitos de contraseña */}
               <View style={registerStyles.passwordRequirements}>
                 <Text style={registerStyles.requirementsTitle}>
-                  <Ionicons name="shield-checkmark" size={16} color="#10518b" /> 
+                  <Ionicons name="shield-checkmark" size={16} color="#10518b" />
                   {' '}Requisitos de Seguridad:
                 </Text>
                 <Text style={[
@@ -672,12 +710,12 @@ export default function RegisterScreen() {
               </View>
 
               {/* Botón de Registro con efectos */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   registerStyles.button,
                   (!isFormValid || loading) && registerStyles.buttonDisabled
-                ]} 
-                onPress={handleRegister} 
+                ]}
+                onPress={handleRegister}
                 disabled={!isFormValid || loading}
                 activeOpacity={0.7}
               >
@@ -687,22 +725,22 @@ export default function RegisterScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 />
-                
+
                 {/* Efecto shine animado */}
                 {isFormValid && !loading && (
-                  <Animated.View 
+                  <Animated.View
                     style={[
                       registerStyles.buttonShine,
                       { transform: [{ translateX: buttonShinePosition }] }
-                    ]} 
+                    ]}
                   />
                 )}
-                
+
                 {loading ? (
                   <ActivityIndicator color="#ffffff" size="large" />
                 ) : (
                   <Text style={registerStyles.buttonText}>
-                    <Ionicons name="checkmark-circle" size={22} color="#ffffff" /> 
+                    <Ionicons name="checkmark-circle" size={22} color="#ffffff" />
                     {'  '}CREAR MI CUENTA
                   </Text>
                 )}
@@ -713,7 +751,7 @@ export default function RegisterScreen() {
                 <Text style={registerStyles.loginText}>
                   ¿Ya tienes una cuenta?
                 </Text>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => router.back()}
                   disabled={loading}
                   activeOpacity={0.6}
@@ -729,7 +767,7 @@ export default function RegisterScreen() {
                       fontWeight: '800',
                       fontSize: 15,
                     }}>
-                      <Ionicons name="log-in" size={15} /> 
+                      <Ionicons name="log-in" size={15} />
                       {' '}Iniciar Sesión
                     </Text>
                   </LinearGradient>

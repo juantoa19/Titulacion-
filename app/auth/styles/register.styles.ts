@@ -346,4 +346,13 @@ export default StyleSheet.create({
     fontWeight: '700',
     color: '#ffffff',
   },
+
+  eyeIconContainer: {
+    position: 'absolute',
+    right: 18,
+    top: 52,
+    zIndex: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

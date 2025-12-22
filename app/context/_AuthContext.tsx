@@ -48,6 +48,7 @@ export interface TicketFormData {
   modelo: string;
   numero_serie: string | null;
   descripcion_problema: string;
+  prioridad: 'baja' | 'media' | 'alta';
 }
 
 export interface LoginData {

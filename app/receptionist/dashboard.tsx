@@ -1,13 +1,61 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useAuth } from '../context/_AuthContext';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { apiFetch } from '../services/api';
 import dashboardStyles from './styles/dashboard.styles';
+
+type TicketStatus = 'pendiente' | 'en_revision' | 'reparado' | 'cerrado';
+interface Ticket {
+  id: string;
+  estado: TicketStatus;
+}
+
+const mapApiToTicket = (apiTicket: any): Ticket => {
+  return {
+    id: apiTicket.id.toString(),
+    estado: apiTicket.estado_usuario,
+  };
+};
 
 export default function UserDashboard() {
   const { user, logout } = useAuth();
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchDashboardStats();
+    }, [])
+  );
+
+  const fetchDashboardStats = async () => {
+    try {
+      // No ponemos setLoading(true) aquí para evitar parpadeos molestos al volver a la pantalla,
+      // a menos que sea la carga inicial o refresh manual.
+      const data = await apiFetch('/tickets');
+      const mappedTickets: Ticket[] = data.map(mapApiToTicket);
+      setTickets(mappedTickets);
+    } catch (error) {
+      console.error('Error cargando estadísticas:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchDashboardStats();
+  };
+
+  const totalTickets = tickets.length;
+  const activeTickets = tickets.filter(t => t.estado === 'pendiente').length;
+  const inProcessTickets = tickets.filter(t => t.estado === 'en_revision').length;
+  const resolvedTickets = tickets.filter(t => t.estado === 'cerrado').length;
 
   return (
     <ScrollView 
@@ -41,21 +89,33 @@ export default function UserDashboard() {
         </View>
       </View>
 
-      {/* Estadísticas rápidas */}
+      {/* Estadísticas rápidas - AHORA DINÁMICAS */}
       <View style={dashboardStyles.statsContainer}>
         <View style={dashboardStyles.statItem}>
-          <Text style={dashboardStyles.statNumber}>0</Text>
-          <Text style={dashboardStyles.statLabel}>Tickets Activos</Text>
+          <Text style={dashboardStyles.statNumber}>
+            {loading ? '-' : totalTickets}
+          </Text>
+          <Text style={dashboardStyles.statLabel}>Tickets Totales</Text>
+        </View>
+        <View style={dashboardStyles.statItem}>
+          <Text style={dashboardStyles.statNumber}>
+            {loading ? '-' : activeTickets}
+          </Text>
+          <Text style={dashboardStyles.statLabel}>Tickets Pendientes</Text>
         </View>
         <View style={dashboardStyles.statDivider} />
         <View style={dashboardStyles.statItem}>
-          <Text style={dashboardStyles.statNumber}>0</Text>
-          <Text style={dashboardStyles.statLabel}>En Proceso</Text>
+          <Text style={dashboardStyles.statNumber}>
+            {loading ? '-' : inProcessTickets}
+          </Text>
+          <Text style={dashboardStyles.statLabel}>En Revisión</Text>
         </View>
         <View style={dashboardStyles.statDivider} />
         <View style={dashboardStyles.statItem}>
-          <Text style={dashboardStyles.statNumber}>0</Text>
-          <Text style={dashboardStyles.statLabel}>Resueltos</Text>
+          <Text style={dashboardStyles.statNumber}>
+            {loading ? '-' : resolvedTickets}
+          </Text>
+          <Text style={dashboardStyles.statLabel}>Cerrados</Text>
         </View>
       </View>
 

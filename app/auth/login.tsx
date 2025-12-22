@@ -13,7 +13,8 @@ import {
   Keyboard,
   Dimensions,
   Easing,
-  ScrollView
+  ScrollView,
+  Image // IMPORTANTE: Importar Image
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/_AuthContext'; 
@@ -21,13 +22,13 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import loginStyles from './styles/login.styles';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // Estado para ver/ocultar contraseña
   const [isFocused, setIsFocused] = useState({
     email: false,
     password: false
@@ -38,23 +39,13 @@ export default function LoginScreen() {
   // Animaciones avanzadas
   const titleAnim = React.useRef(new Animated.Value(0)).current;
   const formAnim = React.useRef(new Animated.Value(0)).current;
-  const logoRotate = React.useRef(new Animated.Value(0)).current;
+  // NOTA: Se eliminó logoRotate ref
   const buttonShineAnim = React.useRef(new Animated.Value(0)).current;
   const floatingAnim1 = React.useRef(new Animated.Value(0)).current;
   const floatingAnim2 = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Animación del logo giratorio
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(logoRotate, {
-          toValue: 1,
-          duration: 20000,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
+    // NOTA: Se eliminó la animación Animated.loop del logo
 
     // Animación del brillo del botón
     Animated.loop(
@@ -68,7 +59,7 @@ export default function LoginScreen() {
       ])
     ).start();
 
-    // Animaciones flotantes
+    // Animaciones flotantes y de entrada
     Animated.parallel([
       Animated.spring(titleAnim, {
         toValue: 1,
@@ -134,10 +125,7 @@ export default function LoginScreen() {
     outputRange: [80, 0]
   });
 
-  const logoRotation = logoRotate.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg']
-  });
+  // NOTA: Se eliminó logoRotation interpolate
 
   const buttonShinePosition = buttonShineAnim.interpolate({
     inputRange: [0, 1],
@@ -190,17 +178,17 @@ export default function LoginScreen() {
         >
           <View style={loginStyles.inner}>
             <View style={loginStyles.header}>
-              {/* Logo animado giratorio */}
-              <Animated.View 
-                style={[
-                  loginStyles.logoContainer,
-                  { transform: [{ rotate: logoRotation }] }
-                ]}
-              >
-                <View style={loginStyles.logoInner}>
-                  <Text style={loginStyles.logoText}>CHM</Text>
-                </View>
-              </Animated.View>
+              
+              {/* --- Logo Imagen --- */}
+              <View style={loginStyles.logoContainer}>
+                {/* Asegúrate de que esta ruta sea correcta para tu proyecto */}
+                <Image 
+                  source={require('../../assets/images/chm_logo.png')} 
+                  style={loginStyles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+              {/* -------------------------------------- */}
 
               <Animated.Text
                 style={[
@@ -253,30 +241,51 @@ export default function LoginScreen() {
                 />
               </View>
 
-              {/* Campo de contraseña con ícono */}
+              {/* --- CAMBIO: Campo de contraseña con opción ver/ocultar --- */}
               <View style={loginStyles.inputContainer}>
                 <Text style={loginStyles.inputLabel}>
                   <Ionicons name="lock-closed-outline" size={18} color="#10518b" /> 
                   {' '}Contraseña
                 </Text>
+                
+                {/* Ícono de candado (Izquierda) */}
                 <View style={loginStyles.inputIconContainer}>
                   <Ionicons name="lock-closed" size={24} color="#5faeee" />
                 </View>
+
                 <TextInput
                   style={[
                     loginStyles.input,
-                    isFocused.password && loginStyles.inputFocused
+                    isFocused.password && loginStyles.inputFocused,
+                    { paddingRight: 55 } // Espacio extra para el ojo
                   ]}
                   placeholder="••••••••"
                   placeholderTextColor="#94a3b8"
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry
+                  
+                  // Lógica de visibilidad
+                  secureTextEntry={!showPassword}
+                  
                   onFocus={() => handleFocus('password')}
                   onBlur={() => handleBlur('password')}
                   editable={!loading}
                 />
+
+                {/* Ícono de ojo (Derecha) */}
+                <TouchableOpacity
+                  style={loginStyles.eyeIconContainer}
+                  onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name={showPassword ? "eye-off" : "eye"} 
+                    size={24} 
+                    color="#94a3b8"
+                  />
+                </TouchableOpacity>
               </View>
+              {/* ----------------------------------------------------- */}
 
               {/* Botón con gradiente y efecto shine */}
               <TouchableOpacity
