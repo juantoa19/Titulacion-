@@ -5,12 +5,12 @@ const IS_DEV = process.env.APP_VARIANT === 'development';
 
 export default {
   expo: {
-    // Si es Dev, cambia el nombre. Si no, usa el original.
-    name: IS_DEV ? "Titulacion (Dev)" : "titulacion",
+    // Nombre de la aplicación
+    name: "CHM Technology",
     slug: "titulacion",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/icon.png",
+    icon: "./assets/images/icono.png",
     scheme: "titulacion",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
@@ -61,6 +61,6 @@ export default {
         projectId: "2c0c0093-f67a-4341-b516-bc85fe1a5a9b"
       }
     },
-    owner: "jeremy339"
+    owner: "jeremy339-org"
   }
 };

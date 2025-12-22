@@ -39,11 +39,16 @@ export interface Ticket {
 }
 
 export interface TicketFormData {
+  cliente_cedula: string;
+  cliente_nombre: string;
+  cliente_direccion?: string;
+  cliente_celular?: string;  
   tipo_dispositivo: string;
   marca: string;
   modelo: string;
   numero_serie: string | null;
   descripcion_problema: string;
+  prioridad: 'baja' | 'media' | 'alta';
 }
 
 export interface LoginData {

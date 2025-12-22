@@ -1,25 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   Alert,
   ActivityIndicator,
   Animated,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
-  Keyboard
+  Keyboard,
+  Dimensions,
+  Easing,
+  ScrollView,
+  Image // IMPORTANTE: Importar Image
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/_AuthContext'; 
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import loginStyles from './styles/login.styles';
+
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // Estado para ver/ocultar contraseña
   const [isFocused, setIsFocused] = useState({
     email: false,
     password: false
@@ -27,22 +36,55 @@ export default function LoginScreen() {
 
   const { login } = useAuth();
 
-  // Animaciones
+  // Animaciones avanzadas
   const titleAnim = React.useRef(new Animated.Value(0)).current;
   const formAnim = React.useRef(new Animated.Value(0)).current;
+  // NOTA: Se eliminó logoRotate ref
+  const buttonShineAnim = React.useRef(new Animated.Value(0)).current;
+  const floatingAnim1 = React.useRef(new Animated.Value(0)).current;
+  const floatingAnim2 = React.useRef(new Animated.Value(0)).current;
 
-  React.useEffect(() => {
+  useEffect(() => {
+    // NOTA: Se eliminó la animación Animated.loop del logo
+
+    // Animación del brillo del botón
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(buttonShineAnim, {
+          toValue: 1,
+          duration: 2000,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Animaciones flotantes y de entrada
     Animated.parallel([
       Animated.spring(titleAnim, {
         toValue: 1,
-        tension: 20,
-        friction: 8,
+        tension: 50,
+        friction: 7,
         useNativeDriver: true,
       }),
       Animated.spring(formAnim, {
         toValue: 1,
-        tension: 20,
-        friction: 8,
+        tension: 50,
+        friction: 7,
+        delay: 300,
+        useNativeDriver: true,
+      }),
+      Animated.spring(floatingAnim1, {
+        toValue: 1,
+        tension: 40,
+        friction: 5,
+        delay: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(floatingAnim2, {
+        toValue: 1,
+        tension: 40,
+        friction: 5,
         delay: 200,
         useNativeDriver: true,
       })
@@ -57,14 +99,11 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      // SOLO llamamos al login. NO redirigimos manualmente.
-      // El cambio de estado en 'user' disparará el useEffect en _layout.tsx
       await login({ email, password });
-      
     } catch (error: any) {
       console.error(error);
       Alert.alert('Error', 'Credenciales incorrectas o error de conexión');
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -78,226 +117,258 @@ export default function LoginScreen() {
 
   const titleScale = titleAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.8, 1]
+    outputRange: [0.7, 1]
   });
 
   const formTranslateY = formAnim.interpolate({
     inputRange: [0, 1],
+    outputRange: [80, 0]
+  });
+
+  // NOTA: Se eliminó logoRotation interpolate
+
+  const buttonShinePosition = buttonShineAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-100, width + 100]
+  });
+
+  const floatingTranslateY1 = floatingAnim1.interpolate({
+    inputRange: [0, 1],
     outputRange: [50, 0]
+  });
+
+  const floatingTranslateY2 = floatingAnim2.interpolate({
+    inputRange: [0, 1],
+    outputRange: [70, 0]
   });
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={loginStyles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* Fondo con gradiente */}
+      <LinearGradient
+        colors={['#ffffff', '#f8fafc', '#e0f2fe']}
+        style={loginStyles.background}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+
+      {/* Elementos flotantes animados */}
+      <View style={loginStyles.floatingElements}>
+        <Animated.View 
+          style={[
+            loginStyles.floatingShape1,
+            { transform: [{ translateY: floatingTranslateY1 }] }
+          ]} 
+        />
+        <Animated.View 
+          style={[
+            loginStyles.floatingShape2,
+            { transform: [{ translateY: floatingTranslateY2 }] }
+          ]} 
+        />
+      </View>
+
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.inner}>
-          <View style={styles.header}>
-            <Animated.Text
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={loginStyles.inner}>
+            <View style={loginStyles.header}>
+              
+              {/* --- Logo Imagen --- */}
+              <View style={loginStyles.logoContainer}>
+                {/* Asegúrate de que esta ruta sea correcta para tu proyecto */}
+                <Image 
+                  source={require('../../assets/images/chm_logo.png')} 
+                  style={loginStyles.logoImage}
+                  resizeMode="contain"
+                />
+              </View>
+              {/* -------------------------------------- */}
+
+              <Animated.Text
+                style={[
+                  loginStyles.title,
+                  { 
+                    transform: [{ scale: titleScale }],
+                    opacity: titleAnim 
+                  }
+                ]}
+              >
+                Bienvenido de Nuevo
+              </Animated.Text>
+              <Text style={loginStyles.subtitle}>
+                Ingresa tus credenciales para continuar
+              </Text>
+            </View>
+
+            <Animated.View
               style={[
-                styles.title,
-                { transform: [{ scale: titleScale }] }
+                loginStyles.formContainer,
+                { 
+                  transform: [{ translateY: formTranslateY }],
+                  opacity: formAnim 
+                }
               ]}
             >
-              Bienvenido
-            </Animated.Text>
-            <Text style={styles.subtitle}>
-              Inicia sesión en tu cuenta
-            </Text>
-          </View>
+              {/* Campo de email con ícono */}
+              <View style={loginStyles.inputContainer}>
+                <Text style={loginStyles.inputLabel}>
+                  <Ionicons name="mail-outline" size={18} color="#10518b" /> 
+                  {' '}Correo electrónico
+                </Text>
+                <View style={loginStyles.inputIconContainer}>
+                  <Ionicons name="mail" size={24} color="#5faeee" />
+                </View>
+                <TextInput
+                  style={[
+                    loginStyles.input,
+                    isFocused.email && loginStyles.inputFocused
+                  ]}
+                  placeholder="ejemplo@correo.com"
+                  placeholderTextColor="#94a3b8"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  onFocus={() => handleFocus('email')}
+                  onBlur={() => handleBlur('email')}
+                  editable={!loading}
+                />
+              </View>
 
-          <Animated.View
-            style={[
-              styles.formContainer,
-              { transform: [{ translateY: formTranslateY }] }
-            ]}
-          >
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Correo electrónico</Text>
-              <TextInput
+              {/* --- CAMBIO: Campo de contraseña con opción ver/ocultar --- */}
+              <View style={loginStyles.inputContainer}>
+                <Text style={loginStyles.inputLabel}>
+                  <Ionicons name="lock-closed-outline" size={18} color="#10518b" /> 
+                  {' '}Contraseña
+                </Text>
+                
+                {/* Ícono de candado (Izquierda) */}
+                <View style={loginStyles.inputIconContainer}>
+                  <Ionicons name="lock-closed" size={24} color="#5faeee" />
+                </View>
+
+                <TextInput
+                  style={[
+                    loginStyles.input,
+                    isFocused.password && loginStyles.inputFocused,
+                    { paddingRight: 55 } // Espacio extra para el ojo
+                  ]}
+                  placeholder="••••••••"
+                  placeholderTextColor="#94a3b8"
+                  value={password}
+                  onChangeText={setPassword}
+                  
+                  // Lógica de visibilidad
+                  secureTextEntry={!showPassword}
+                  
+                  onFocus={() => handleFocus('password')}
+                  onBlur={() => handleBlur('password')}
+                  editable={!loading}
+                />
+
+                {/* Ícono de ojo (Derecha) */}
+                <TouchableOpacity
+                  style={loginStyles.eyeIconContainer}
+                  onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons 
+                    name={showPassword ? "eye-off" : "eye"} 
+                    size={24} 
+                    color="#94a3b8"
+                  />
+                </TouchableOpacity>
+              </View>
+              {/* ----------------------------------------------------- */}
+
+              {/* Botón con gradiente y efecto shine */}
+              <TouchableOpacity
                 style={[
-                  styles.input,
-                  isFocused.email && styles.inputFocused
+                  loginStyles.button,
+                  loading && loginStyles.buttonDisabled,
+                  (!email || !password) && loginStyles.buttonDisabled
                 ]}
-                placeholder="tu@email.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                onFocus={() => handleFocus('email')}
-                onBlur={() => handleBlur('email')}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Contraseña</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  isFocused.password && styles.inputFocused
-                ]}
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                onFocus={() => handleFocus('password')}
-                onBlur={() => handleBlur('password')}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.button,
-                loading && styles.buttonDisabled,
-                (!email || !password) && styles.buttonDisabled
-              ]}
-              onPress={handleLogin}
-              disabled={loading || !email || !password}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <Text style={styles.buttonText}>Iniciar Sesión</Text>
-              )}
-            </TouchableOpacity>
-
-            <View style={styles.demoContainer}>
-              <Text style={styles.demoTitle}>Credenciales de prueba:</Text>
-              <Text style={styles.demoText}>• admin@proyecto.com (pass: password123)</Text>
-            </View>
-
-            <View style={styles.registerContainer}>
-              <Text style={styles.registerText}>¿No tienes cuenta? </Text>
-              <TouchableOpacity onPress={() => router.push('/auth/register')}>
-                <Text style={styles.registerLink}>Regístrate aquí</Text>
+                onPress={handleLogin}
+                disabled={loading || !email || !password}
+                activeOpacity={0.7}
+              >
+                <LinearGradient
+                  colors={['#5faeee', '#3b8fd9', '#10518b']}
+                  style={loginStyles.buttonGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                />
+                
+                {/* Efecto shine animado */}
+                <Animated.View 
+                  style={[
+                    loginStyles.buttonShine,
+                    { transform: [{ translateX: buttonShinePosition }] }
+                  ]} 
+                />
+                
+                {loading ? (
+                  <ActivityIndicator color="#ffffff" size="large" />
+                ) : (
+                  <Text style={loginStyles.buttonText}>
+                    <Ionicons name="arrow-forward" size={22} color="#ffffff" /> 
+                    {'  '}INICIAR SESIÓN
+                  </Text>
+                )}
               </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </View>
+
+              {/* Sección de credenciales de prueba */}
+              <View style={loginStyles.demoContainer}>
+                <Text style={loginStyles.demoTitle}>
+                  <Ionicons name="key-outline" size={18} color="#10518b" /> 
+                  {' '}DEMO: Usa estas credenciales
+                </Text>
+                <Text style={loginStyles.demoText}>
+                  👑 admin@proyecto.com • password: password123
+                </Text>
+                <Text style={[loginStyles.demoText, { fontSize: 12, marginTop: 8 }]}>
+                  <Ionicons name="information-circle-outline" size={12} /> 
+                  {' '}Estas credenciales son solo para pruebas
+                </Text>
+              </View>
+
+              {/* Enlace de registro */}
+              <View style={loginStyles.registerContainer}>
+                <Text style={loginStyles.registerText}>
+                  ¿Eres nuevo aquí?
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => router.push('/auth/register')}
+                  disabled={loading}
+                  activeOpacity={0.6}
+                >
+                  <LinearGradient
+                    colors={['rgba(16, 81, 139, 0.1)', 'rgba(95, 174, 238, 0.2)']}
+                    style={loginStyles.registerLink}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Text style={{
+                      color: '#10518b',
+                      fontWeight: '800',
+                      fontSize: 16,
+                    }}>
+                      <Ionicons name="person-add" size={16} /> 
+                      {' '}Crear Cuenta
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          </View>
+        </ScrollView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  inner: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#1e293b',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    color: '#64748b',
-  },
-  formContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
-    fontSize: 16,
-    color: '#1e293b',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  inputFocused: {
-    borderColor: '#3b82f6',
-    shadowColor: '#3b82f6',
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  button: {
-    backgroundColor: '#3b82f6',
-    padding: 18,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-    shadowColor: '#3b82f6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  buttonDisabled: {
-    backgroundColor: '#cbd5e1',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  demoContainer: {
-    marginTop: 24,
-    padding: 16,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
-  },
-  demoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
-    marginBottom: 8,
-  },
-  demoText: {
-    fontSize: 12,
-    color: '#64748b',
-    marginBottom: 2,
-  },
-  registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  registerText: {
-    color: '#64748b',
-    fontSize: 14,
-  },
-  registerLink: {
-    color: '#3b82f6',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-});

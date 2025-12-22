@@ -38,7 +38,7 @@ function RootLayoutNav() {
     } else if (user && inAuthGroup) {
       // Si SÍ hay usuario Y SÍ está en el grupo 'auth' (o sea, en login/register)
       // lo mandamos a su panel correspondiente.
-      let path: any = '/user/dashboard';
+      let path: any = '/receptionist/dashboard';
       if (user.role === 'admin') {
         path = '/admin';
       } else if (user.role === 'tecnico') {
@@ -60,21 +60,21 @@ function RootLayoutNav() {
 
   // Cuando ya cargó, muestra las pantallas
   return (
-    <Stack>
+    <Stack screenOptions={{ headerShown: false }}>
       {/* Estas son las pantallas que el guardián de arriba está protegiendo.
         Si el usuario no está logueado, será redirigido ANTES de verlas.
       */}
-      <Stack.Screen name="welcome" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="welcome" />
+      <Stack.Screen name="(tabs)" />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      <Stack.Screen name="user/dashboard" options={{ title: 'Panel de Usuario' }} />
-      <Stack.Screen name="technician/dashboard" options={{ title: 'Panel de Técnico' }} />
-      <Stack.Screen name="admin/index" options={{ title: 'Panel de Administrador' }} />
+      <Stack.Screen name="receptionist/dashboard" />
+      <Stack.Screen name="technician/dashboard" />
+      <Stack.Screen name="admin/index" />
       
       {/* Esta es la pantalla de 'auth' (login/register). 
         El guardián nos sacará de aquí si ya estamos logueados.
       */}
-      <Stack.Screen name="auth" options={{ headerShown: false }} />
+      <Stack.Screen name="auth" />
     </Stack>
   );
 }
