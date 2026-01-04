@@ -25,7 +25,7 @@ export default StyleSheet.create({
   },
   header: {
     backgroundColor: colors.primary,
-    paddingTop: 60,
+    paddingTop: 80,
     paddingBottom: 24,
     paddingHorizontal: 24,
     borderBottomLeftRadius: 24,
@@ -34,14 +34,14 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
     color: colors.white,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 12,
     color: colors.lightBlue,
     textAlign: 'center',
     opacity: 0.9,

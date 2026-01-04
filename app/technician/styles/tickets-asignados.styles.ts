@@ -25,7 +25,7 @@ export default StyleSheet.create({
   },
   header: {
     backgroundColor: colors.primary,
-    paddingTop: 60,
+    paddingTop: 100,
     paddingBottom: 24,
     paddingHorizontal: 24,
     borderBottomLeftRadius: 24,
@@ -34,14 +34,14 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
     color: colors.white,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.lightBlue,
     textAlign: 'center',
     opacity: 0.9,
@@ -293,6 +293,21 @@ export default StyleSheet.create({
     marginBottom: 20,
     borderWidth: 2,
     borderColor: colors.success + '30',
+  },
+  revisionFieldsContainer: {
+    backgroundColor: '#fffbeb', // Fondo ámbar muy claro
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#f59e0b' + '30', // Naranja con opacidad
+  },
+  revisionHelperText: {
+    fontSize: 14,
+    color: '#d97706', // Naranja oscuro
+    marginBottom: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   helperText: {
     fontSize: 14,

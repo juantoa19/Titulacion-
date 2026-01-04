@@ -24,7 +24,7 @@ export default StyleSheet.create({
   },
   headerContainer: {
     backgroundColor: colors.primary,
-    paddingTop: 60,
+    paddingTop: 90,
     paddingBottom: 30,
     paddingHorizontal: 24,
     borderBottomLeftRadius: 24,

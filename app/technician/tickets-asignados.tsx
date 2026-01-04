@@ -16,6 +16,7 @@ import { useAuth } from '../context/_AuthContext';
 import { apiFetch } from '../services/api'; 
 import { useFocusEffect, router } from 'expo-router';
 import ticketsAsignadosStyles from './styles/tickets-asignados.styles';
+import BackButton from '../../components/BackButton';
 
 type TicketStatus = 'pendiente' | 'en_revision' | 'reparado' | 'cerrado';
 type Priority = 'alta' | 'media' | 'baja';
@@ -90,6 +91,7 @@ export default function TicketsAsignados() {
   const [newStatus, setNewStatus] = useState<TicketStatus | null>(null);
   const [newPriority, setNewPriority] = useState<Priority | null>(null);
 
+  const [observacionRevision, setObservacionRevision] = useState('');
   const [observaciones, setObservaciones] = useState('');
   const [costoTotal, setCostoTotal] = useState('');
   const [abono, setAbono] = useState('');
@@ -125,6 +127,7 @@ export default function TicketsAsignados() {
     setNewStatus(null);
     setNewPriority(null);
     setObservaciones('');
+    setObservacionRevision('');
     setCostoTotal('');
     setAbono('');
   };
@@ -139,6 +142,18 @@ export default function TicketsAsignados() {
       estado_usuario: statusToSend,
       prioridad: priorityToSend,
     };
+
+    if (statusToSend === 'en_revision') {
+      if (!observacionRevision.trim()) {
+        Alert.alert('Faltan datos', 'Por favor ingrese la observación de la revisión/diagnóstico.');
+        return;
+      }
+      payload = {
+        ...payload,
+        observacion_revision: observacionRevision,
+        estado_interno: 'en_proceso'
+      };
+    }
 
     if (statusToSend === 'cerrado') {
       if (!observaciones.trim()) {
@@ -218,6 +233,7 @@ export default function TicketsAsignados() {
         setNewStatus(ticket.estado);
         setNewPriority(ticket.prioridad || null); 
         setObservaciones('');
+        setObservacionRevision('');
         setCostoTotal('');
         setAbono('');
       }}
@@ -250,11 +266,13 @@ export default function TicketsAsignados() {
   );
 
   const isClosing = newStatus === 'cerrado';
+  const isRevision = newStatus === 'en_revision';
   const saldoPendiente = (parseFloat(costoTotal || '0') - parseFloat(abono || '0')).toFixed(2);
 
   return (
     <View style={ticketsAsignadosStyles.container}>
       {/* Header mejorado */}
+      <BackButton />
       <View style={ticketsAsignadosStyles.header}>
         <Text style={ticketsAsignadosStyles.title}>Mis Tickets Asignados</Text>
         <Text style={ticketsAsignadosStyles.subtitle}>Tickets en los que estás trabajando</Text>
@@ -380,7 +398,24 @@ export default function TicketsAsignados() {
                     </TouchableOpacity>
                   ))}
                 </View>
-
+                {isRevision && (
+                  <View style={ticketsAsignadosStyles.revisionFieldsContainer}>
+                    <Text style={ticketsAsignadosStyles.revisionHelperText}>
+                      Ingrese los detalles del diagnóstico:
+                    </Text>
+                    
+                    <Text style={ticketsAsignadosStyles.inputLabel}>Observación de Revisión *</Text>
+                    <TextInput
+                      style={[ticketsAsignadosStyles.input, ticketsAsignadosStyles.textArea]}
+                      placeholder="Diagnóstico inicial, piezas requeridas, etc..."
+                      multiline
+                      numberOfLines={3}
+                      value={observacionRevision}
+                      onChangeText={setObservacionRevision}
+                      placeholderTextColor="#94a3b8"
+                    />
+                  </View>
+                )}
                 {isClosing && (
                   <View style={ticketsAsignadosStyles.closingFieldsContainer}>
                     <Text style={ticketsAsignadosStyles.helperText}>Complete los datos para cerrar el ticket:</Text>

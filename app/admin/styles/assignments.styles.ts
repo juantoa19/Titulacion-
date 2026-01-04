@@ -25,7 +25,7 @@ export default StyleSheet.create({
   },
   header: {
     backgroundColor: colors.primary,
-    paddingTop: 60,
+    paddingTop: 90,
     paddingBottom: 24,
     paddingHorizontal: 24,
     borderBottomLeftRadius: 24,
@@ -265,5 +265,23 @@ export default StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.mediumGray,
+  },
+  deleteButton: {
+    backgroundColor: '#fee2e2', // Rojo muy claro (fondo)
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ef4444', // Rojo intenso (borde)
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8, // Un poco de espacio si está debajo de otros botones
+    // Opcional: si lo pones al lado de otro botón, usa flex o margin horizontal
+  },
+  deleteButtonText: {
+    color: '#ef4444', // Texto rojo
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
 });

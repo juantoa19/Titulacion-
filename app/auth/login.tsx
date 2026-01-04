@@ -323,21 +323,6 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
 
-              {/* Sección de credenciales de prueba */}
-              <View style={loginStyles.demoContainer}>
-                <Text style={loginStyles.demoTitle}>
-                  <Ionicons name="key-outline" size={18} color="#10518b" /> 
-                  {' '}DEMO: Usa estas credenciales
-                </Text>
-                <Text style={loginStyles.demoText}>
-                  👑 admin@proyecto.com • password: password123
-                </Text>
-                <Text style={[loginStyles.demoText, { fontSize: 12, marginTop: 8 }]}>
-                  <Ionicons name="information-circle-outline" size={12} /> 
-                  {' '}Estas credenciales son solo para pruebas
-                </Text>
-              </View>
-
               {/* Enlace de registro */}
               <View style={loginStyles.registerContainer}>
                 <Text style={loginStyles.registerText}>

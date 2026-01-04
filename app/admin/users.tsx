@@ -13,6 +13,8 @@ import { StyleSheet } from 'react-native';
 import { apiFetch } from '../services/api';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import usersStyles from './styles/users.styles';
+import BackButton from '../../components/BackButton';
+
 
 interface Role {
   name: string;
@@ -234,6 +236,7 @@ export default function UsersManagement() {
 
   return (
     <View style={usersStyles.container}>
+       <BackButton />
       {/* --- Header con Buscador y Filtros --- */}
       <View style={usersStyles.headerContainer}>
          <View style={usersStyles.headerBackground} />
