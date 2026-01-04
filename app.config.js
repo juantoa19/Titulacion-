@@ -10,7 +10,7 @@ export default {
     slug: "titulacion",
     version: "1.0.0",
     orientation: "portrait",
-    icon: "./assets/images/icono.png",
+    icon: "./assets/images/icon.png",
     scheme: "titulacion",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
@@ -24,7 +24,6 @@ export default {
         backgroundColor: "#E6F4FE",
         foregroundImage: "./assets/images/android-icon-foreground.png",
         backgroundImage: "./assets/images/android-icon-background.png",
-        monochromeImage: "./assets/images/android-icon-monochrome.png"
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,

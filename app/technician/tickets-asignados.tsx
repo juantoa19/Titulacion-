@@ -18,6 +18,7 @@ import { useFocusEffect, router } from 'expo-router';
 import ticketsAsignadosStyles from './styles/tickets-asignados.styles';
 import BackButton from '../../components/BackButton';
 
+
 type TicketStatus = 'pendiente' | 'en_revision' | 'reparado' | 'cerrado';
 type Priority = 'alta' | 'media' | 'baja';
 
@@ -271,8 +272,8 @@ export default function TicketsAsignados() {
 
   return (
     <View style={ticketsAsignadosStyles.container}>
-      {/* Header mejorado */}
       <BackButton />
+      {/* Header mejorado */}
       <View style={ticketsAsignadosStyles.header}>
         <Text style={ticketsAsignadosStyles.title}>Mis Tickets Asignados</Text>
         <Text style={ticketsAsignadosStyles.subtitle}>Tickets en los que estás trabajando</Text>
