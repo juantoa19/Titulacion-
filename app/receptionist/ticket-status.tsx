@@ -11,9 +11,10 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useAuth } from '../context/_AuthContext';
-import { apiFetch } from '../services/api'; 
+import { apiFetch } from '../services/api';
 import { useFocusEffect } from 'expo-router';
 import ticketStatusStyles from './styles/ticket-status.styles';
+import BackButton from '../../components/BackButton';
 
 type TicketStatus = 'pendiente' | 'en_revision' | 'reparado' | 'cerrado';
 type Priority = 'alta' | 'media' | 'baja';
@@ -42,6 +43,8 @@ interface Ticket {
   fechaSolicitud: string;
   estado: TicketStatus;
   prioridad?: Priority;
+  observacionRevision?: string;
+  observacionesTecnico?: string;
   tecnicoAsignado?: string;
   recepcionista?: string;
   observaciones_tecnico?: string;
@@ -53,7 +56,7 @@ const mapApiToTicket = (apiTicket: any): Ticket => {
   const usuario = apiTicket.cliente || {};
   const tecnico = apiTicket.tecnico || {};
   const recepcionista = apiTicket.recepcionista || {};
-  
+
   const nombreCompleto = (usuario.nombre || 'Cliente Desconocido').split(' ');
   const nombre1 = nombreCompleto[0] || '';
   const apellido1 = nombreCompleto.length > 1 ? nombreCompleto[1] : '';
@@ -79,6 +82,8 @@ const mapApiToTicket = (apiTicket: any): Ticket => {
     problema: apiTicket.descripcion_problema,
     fechaSolicitud: apiTicket.created_at,
     estado: apiTicket.estado_usuario,
+    observacionRevision: apiTicket.observacion_revision,
+    observacionesTecnico: apiTicket.observaciones_tecnico,
     prioridad: apiTicket.prioridad,
     tecnicoAsignado: tecnico.name || 'Sin asignar',
     recepcionista: recepcionista.name || 'Sistema',
@@ -104,7 +109,7 @@ export default function TicketStatus() {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const data = await apiFetch('/tickets'); 
+      const data = await apiFetch('/tickets');
       const mappedTickets: Ticket[] = data.map(mapApiToTicket);
       setTickets(mappedTickets);
     } catch (error) {
@@ -115,10 +120,10 @@ export default function TicketStatus() {
       setRefreshing(false);
     }
   };
-  
+
   const onRefresh = () => {
-      setRefreshing(true);
-      fetchTickets();
+    setRefreshing(true);
+    fetchTickets();
   };
 
   const getStatusColor = (status: TicketStatus) => {
@@ -138,8 +143,8 @@ export default function TicketStatus() {
   };
 
   const TicketCard = ({ ticket }: { ticket: Ticket }) => (
-    <TouchableOpacity 
-      style={ticketStatusStyles.card} 
+    <TouchableOpacity
+      style={ticketStatusStyles.card}
       onPress={() => setSelectedTicket(ticket)}
       activeOpacity={0.8}
     >
@@ -153,7 +158,7 @@ export default function TicketStatus() {
 
       <Text style={ticketStatusStyles.deviceText}>{ticket.deviceInfo.marca} {ticket.deviceInfo.modelo}</Text>
       <Text style={ticketStatusStyles.userText}>Cliente: {ticket.userInfo?.nombre1} {ticket.userInfo?.apellido1}</Text>
-      
+
       <View style={ticketStatusStyles.cardFooter}>
         <Text style={ticketStatusStyles.dateText}>{formatDate(ticket.fechaSolicitud)}</Text>
         <Text style={ticketStatusStyles.assignedText}>Tec: {ticket.tecnicoAsignado}</Text>
@@ -164,10 +169,11 @@ export default function TicketStatus() {
   return (
     <View style={ticketStatusStyles.container}>
       {/* Header mejorado */}
+      <BackButton />
       <View style={ticketStatusStyles.header}>
         <Text style={ticketStatusStyles.title}>Estado de Tickets</Text>
         <Text style={ticketStatusStyles.subtitle}>Consulta todos los tickets del sistema</Text>
-        
+
         {/* Estadísticas rápidas */}
         <View style={ticketStatusStyles.statsContainer}>
           <View style={ticketStatusStyles.statItem}>
@@ -197,7 +203,7 @@ export default function TicketStatus() {
           </View>
         </View>
       </View>
-      
+
       {loading ? (
         <View style={ticketStatusStyles.loadingContainer}>
           <ActivityIndicator size="large" color="#10518b" />
@@ -215,8 +221,8 @@ export default function TicketStatus() {
             </View>
           }
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
+            <RefreshControl
+              refreshing={refreshing}
               onRefresh={onRefresh}
               tintColor="#5faee3"
               colors={['#5faee3', '#10518b']}
@@ -243,20 +249,20 @@ export default function TicketStatus() {
 
                 {/* Información centrada */}
                 <View style={ticketStatusStyles.infoContainer}>
-                  
+
                   {/* Info Cliente */}
                   <View style={ticketStatusStyles.infoSection}>
                     <Text style={ticketStatusStyles.sectionTitle}>👤 Cliente</Text>
                     <View style={ticketStatusStyles.infoCard}>
                       <Text style={ticketStatusStyles.infoLabel}>Nombre</Text>
                       <Text style={ticketStatusStyles.infoValue}>{selectedTicket.userInfo.nombre1} {selectedTicket.userInfo.apellido1}</Text>
-                      
+
                       <Text style={ticketStatusStyles.infoLabel}>Cédula</Text>
                       <Text style={ticketStatusStyles.infoValue}>{selectedTicket.userInfo.cedula}</Text>
-                      
+
                       <Text style={ticketStatusStyles.infoLabel}>Teléfono</Text>
                       <Text style={ticketStatusStyles.infoValue}>{selectedTicket.userInfo.telefono}</Text>
-                      
+
                       <Text style={ticketStatusStyles.infoLabel}>Dirección</Text>
                       <Text style={ticketStatusStyles.infoValue}>{selectedTicket.userInfo.direccion}</Text>
                     </View>
@@ -268,10 +274,10 @@ export default function TicketStatus() {
                     <View style={ticketStatusStyles.infoCard}>
                       <Text style={ticketStatusStyles.infoLabel}>Equipo</Text>
                       <Text style={ticketStatusStyles.infoValue}>{selectedTicket.deviceInfo.tipoDispositivo}</Text>
-                      
+
                       <Text style={ticketStatusStyles.infoLabel}>Modelo</Text>
                       <Text style={ticketStatusStyles.infoValue}>{selectedTicket.deviceInfo.marca} {selectedTicket.deviceInfo.modelo}</Text>
-                      
+
                       <Text style={ticketStatusStyles.infoLabel}>N° Serie</Text>
                       <Text style={ticketStatusStyles.infoValue}>{selectedTicket.deviceInfo.numeroSerie || 'S/N'}</Text>
                     </View>
@@ -285,12 +291,24 @@ export default function TicketStatus() {
                     </View>
                   </View>
 
+                  {/* DATOS DE REVISIÓN */}
+                  {selectedTicket.estado === 'en_revision' && selectedTicket.observacionRevision && (
+                    <View style={ticketStatusStyles.revisionContainer}>
+                      <Text style={ticketStatusStyles.revisionLabel}>
+                        ⚠️ Diagnóstico / Revisión en curso:
+                      </Text>
+                      <Text style={ticketStatusStyles.revisionText}>
+                        {selectedTicket.observacionRevision}
+                      </Text>
+                    </View>
+                  )}
+
                   {/* DATOS DE CIERRE */}
                   {selectedTicket.estado === 'cerrado' && (
                     <View style={ticketStatusStyles.infoSection}>
                       <Text style={[ticketStatusStyles.sectionTitle, { color: '#10b981' }]}>✅ Información de Cierre</Text>
                       <View style={ticketStatusStyles.closureCard}>
-                        
+
                         <Text style={ticketStatusStyles.infoLabel}>Observaciones del Técnico</Text>
                         <View style={ticketStatusStyles.obsCard}>
                           <Text style={ticketStatusStyles.obsText}>{selectedTicket.observaciones_tecnico || 'Sin observaciones.'}</Text>
@@ -310,7 +328,7 @@ export default function TicketStatus() {
                             <View style={ticketStatusStyles.financialCard}>
                               <Text style={ticketStatusStyles.financialLabel}>Saldo Pendiente</Text>
                               <Text style={[
-                                ticketStatusStyles.financialValue, 
+                                ticketStatusStyles.financialValue,
                                 (selectedTicket.costo_total! - selectedTicket.abono!) > 0 ? { color: '#ef4444' } : { color: '#10b981' }
                               ]}>
                                 ${((selectedTicket.costo_total! - selectedTicket.abono!) || 0).toFixed(2)}
@@ -340,8 +358,8 @@ export default function TicketStatus() {
                 </View>
               </ScrollView>
 
-              <TouchableOpacity 
-                style={ticketStatusStyles.closeButton} 
+              <TouchableOpacity
+                style={ticketStatusStyles.closeButton}
                 onPress={() => setSelectedTicket(null)}
                 activeOpacity={0.7}
               >

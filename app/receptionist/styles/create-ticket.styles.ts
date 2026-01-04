@@ -48,7 +48,7 @@ export default StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
     color: colors.white,
     marginBottom: 8,
@@ -56,7 +56,7 @@ export default StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.lightBlue,
     opacity: 0.9,
     textAlign: 'center',

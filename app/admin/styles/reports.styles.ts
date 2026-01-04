@@ -26,7 +26,7 @@ export default StyleSheet.create({
   header: {
     backgroundColor: colors.primary,
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: 90,
     paddingBottom: 30,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
@@ -46,7 +46,7 @@ export default StyleSheet.create({
     lineHeight: 22,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: colors.dark,
     marginBottom: 16,
@@ -79,6 +79,13 @@ export default StyleSheet.create({
     fontSize: 16,
     color: colors.mediumGray,
     fontWeight: '600',
+  },
+  dateText: {
+    fontSize: 16,
+    color: colors.dark,
+    fontWeight: '500',
+    flex: 1, // Importante para que ocupe el espacio y se alinee bien
+    textAlignVertical: 'center', // Ayuda a centrar en Android
   },
   label: {
     fontSize: 14,

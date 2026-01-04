@@ -14,6 +14,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useAuth } from '../context/_AuthContext';
 import { apiFetch } from '../services/api';
 import ticketsDisponiblesStyles from './styles/tickets-disponibles.styles';
+import BackButton from '../../components/BackButton';
 
 type TicketStatus = 'pendiente' | 'en_revision' | 'reparado' | 'cerrado';
 type Priority = 'alta' | 'media' | 'baja';
@@ -309,6 +310,7 @@ export default function TicketsDisponibles() {
   return (
     <View style={ticketsDisponiblesStyles.container}>
       {/* Header mejorado */}
+       <BackButton />
       <View style={ticketsDisponiblesStyles.header}>
         <Text style={ticketsDisponiblesStyles.title}>Tickets Disponibles</Text>
         <Text style={ticketsDisponiblesStyles.subtitle}>Tickets sin técnico asignado</Text>

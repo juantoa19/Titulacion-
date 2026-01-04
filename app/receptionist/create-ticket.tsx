@@ -5,16 +5,17 @@ import { searchClientByCedula } from '../services/api'; // Importamos la nueva f
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import createTicketStyles from './styles/create-ticket.styles';
+import BackButton from '../../components/BackButton';
 
 export default function CreateTicketReceptionist() {
   const { createTicket } = useAuth();
-  
+
   // --- Estados del Cliente ---
   const [cedula, setCedula] = useState('');
   const [nombre, setNombre] = useState('');
   const [direccion, setDireccion] = useState('');
   const [celular, setCelular] = useState('');
-  
+
   // Estado para controlar si bloqueamos el nombre (si el cliente ya existe)
   const [isNameLocked, setIsNameLocked] = useState(false);
   const [searchingClient, setSearchingClient] = useState(false);
@@ -26,7 +27,7 @@ export default function CreateTicketReceptionist() {
   const [numeroSerie, setNumeroSerie] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [prioridad, setPrioridad] = useState<'baja' | 'media' | 'alta'>('baja');
-  
+
   const [loading, setLoading] = useState(false);
 
   // Errores de validación (solo datos del cliente)
@@ -42,15 +43,15 @@ export default function CreateTicketReceptionist() {
     setSearchingClient(true);
     try {
       const cliente = await searchClientByCedula(cedula);
-      
+
       // ¡ÉXITO! Cliente encontrado
       setNombre(cliente.nombre);
       setDireccion(cliente.direccion || ''); // Si viene null, ponemos string vacío
       setCelular(cliente.celular || '');
-      
+
       // Bloqueamos el nombre para que no lo editen por error
       setIsNameLocked(true);
-      
+
       // Opcional: Feedback visual
       // Alert.alert('Cliente Encontrado', `Datos cargados de ${cliente.nombre}`);
 
@@ -140,42 +141,44 @@ export default function CreateTicketReceptionist() {
 
   return (
     <ScrollView contentContainerStyle={createTicketStyles.container}>
-      <View style={createTicketStyles.header}>
+       <BackButton />
+      <View style={createTicketStyles.header}>       
         <Text style={createTicketStyles.title}>Recepción de Equipo</Text>
         <Text style={createTicketStyles.subtitle}>Datos del Cliente y Dispositivo</Text>
       </View>
 
       <View style={createTicketStyles.form}>
-        
+
         {/* --- SECCIÓN 1: DATOS DEL CLIENTE --- */}
         <Text style={createTicketStyles.sectionTitle}>1. Datos del Cliente</Text>
-        
+
         <View style={createTicketStyles.inputGroup}>
           <Text style={createTicketStyles.label}>Cédula / DNI <Text style={createTicketStyles.required}>*</Text></Text>
           <View style={createTicketStyles.searchRow}>
-            <TextInput 
-              style={[createTicketStyles.input, createTicketStyles.searchInput, cedulaError && createTicketStyles.inputErrorBorder]} 
-              value={cedula} 
+            <TextInput
+              style={[createTicketStyles.input, createTicketStyles.searchInput, cedulaError && createTicketStyles.inputErrorBorder]}
+              value={cedula}
               onChangeText={(text) => {
                 setCedula(text);
                 // Si cambia la cédula, reseteamos el bloqueo por seguridad
-                if(isNameLocked) setIsNameLocked(false); 
+                if (isNameLocked) setIsNameLocked(false);
                 if (cedulaError) setCedulaError(null);
-              }} 
-              placeholder="1720..." 
+              }}
+              placeholder="1720..."
               keyboardType="numeric"
               placeholderTextColor="#94a3b8"
+              maxLength={10}
             />
             {cedulaError ? <Text style={createTicketStyles.errorText}>{cedulaError}</Text> : null}
-            <TouchableOpacity 
-              style={createTicketStyles.searchButton} 
+            <TouchableOpacity
+              style={createTicketStyles.searchButton}
               onPress={handleSearchClient}
               disabled={searchingClient}
             >
               {searchingClient ? (
-                 <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color="#fff" size="small" />
               ) : (
-                 <Ionicons name="search" size={20} color="#fff" />
+                <Ionicons name="search" size={20} color="#fff" />
               )}
             </TouchableOpacity>
           </View>
@@ -183,14 +186,23 @@ export default function CreateTicketReceptionist() {
 
         <View style={createTicketStyles.inputGroup}>
           <Text style={createTicketStyles.label}>Nombre Completo <Text style={createTicketStyles.required}>*</Text></Text>
-          <TextInput 
-            style={[createTicketStyles.input, isNameLocked && createTicketStyles.inputLocked, nombreError && createTicketStyles.inputErrorBorder]} 
-            value={nombre} 
-            onChangeText={(text) => { setNombre(text); if (nombreError) setNombreError(null); }} 
-            placeholder="Nombre del cliente" 
+          <TextInput
+            style={[
+              createTicketStyles.input,
+              isNameLocked && createTicketStyles.inputLocked,
+              nombreError && createTicketStyles.inputErrorBorder
+            ]}
+            value={nombre}
+            onChangeText={(text) => {
+              const onlyLetters = text.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+              setNombre(onlyLetters);
+              if (nombreError) setNombreError(null);
+            }}
+            placeholder="Nombre del cliente"
             placeholderTextColor="#94a3b8"
-            editable={!isNameLocked} // Aquí ocurre la magia del bloqueo
+            editable={!isNameLocked}
           />
+
           {isNameLocked && <Text style={createTicketStyles.helperText}>🔒 Nombre cargado del sistema</Text>}
           {nombreError ? <Text style={createTicketStyles.errorText}>{nombreError}</Text> : null}
         </View>
@@ -198,22 +210,23 @@ export default function CreateTicketReceptionist() {
         <View style={createTicketStyles.row}>
           <View style={[createTicketStyles.inputGroup, createTicketStyles.halfInput]}>
             <Text style={createTicketStyles.label}>Celular</Text>
-            <TextInput 
-              style={createTicketStyles.input} 
-              value={celular} 
-              onChangeText={setCelular} 
-              placeholder="099..." 
+            <TextInput
+              style={createTicketStyles.input}
+              value={celular}
+              onChangeText={setCelular}
+              placeholder="099..."
               keyboardType="phone-pad"
               placeholderTextColor="#94a3b8"
+              maxLength={10}
             />
           </View>
           <View style={[createTicketStyles.inputGroup, createTicketStyles.halfInput]}>
             <Text style={createTicketStyles.label}>Dirección</Text>
-            <TextInput 
-              style={createTicketStyles.input} 
-              value={direccion} 
-              onChangeText={setDireccion} 
-              placeholder="Av..." 
+            <TextInput
+              style={createTicketStyles.input}
+              value={direccion}
+              onChangeText={setDireccion}
+              placeholder="Av..."
               placeholderTextColor="#94a3b8"
             />
           </View>
@@ -226,11 +239,11 @@ export default function CreateTicketReceptionist() {
 
         <View style={createTicketStyles.inputGroup}>
           <Text style={createTicketStyles.label}>Tipo de dispositivo <Text style={createTicketStyles.required}>*</Text></Text>
-          <TextInput 
-            style={createTicketStyles.input} 
-            value={tipo} 
-            onChangeText={setTipo} 
-            placeholder="Ej. Celular, Laptop" 
+          <TextInput
+            style={createTicketStyles.input}
+            value={tipo}
+            onChangeText={setTipo}
+            placeholder="Ej. Celular, Laptop"
             placeholderTextColor="#94a3b8"
           />
         </View>
@@ -238,21 +251,21 @@ export default function CreateTicketReceptionist() {
         <View style={createTicketStyles.row}>
           <View style={[createTicketStyles.inputGroup, createTicketStyles.halfInput]}>
             <Text style={createTicketStyles.label}>Marca <Text style={createTicketStyles.required}>*</Text></Text>
-            <TextInput 
-              style={createTicketStyles.input} 
-              value={marca} 
-              onChangeText={setMarca} 
-              placeholder="Ej. Samsung" 
+            <TextInput
+              style={createTicketStyles.input}
+              value={marca}
+              onChangeText={setMarca}
+              placeholder="Ej. Samsung"
               placeholderTextColor="#94a3b8"
             />
           </View>
           <View style={[createTicketStyles.inputGroup, createTicketStyles.halfInput]}>
             <Text style={createTicketStyles.label}>Modelo <Text style={createTicketStyles.required}>*</Text></Text>
-            <TextInput 
-              style={createTicketStyles.input} 
-              value={modelo} 
-              onChangeText={setModelo} 
-              placeholder="Ej. S21" 
+            <TextInput
+              style={createTicketStyles.input}
+              value={modelo}
+              onChangeText={setModelo}
+              placeholder="Ej. S21"
               placeholderTextColor="#94a3b8"
             />
           </View>
@@ -260,11 +273,11 @@ export default function CreateTicketReceptionist() {
 
         <View style={createTicketStyles.inputGroup}>
           <Text style={createTicketStyles.label}>Número de serie</Text>
-          <TextInput 
-            style={createTicketStyles.input} 
-            value={numeroSerie} 
-            onChangeText={setNumeroSerie} 
-            placeholder="SN..." 
+          <TextInput
+            style={createTicketStyles.input}
+            value={numeroSerie}
+            onChangeText={setNumeroSerie}
+            placeholder="SN..."
             placeholderTextColor="#94a3b8"
           />
         </View>
@@ -308,32 +321,32 @@ export default function CreateTicketReceptionist() {
         </View>
 
         <View style={createTicketStyles.actions}>
-          <TouchableOpacity 
-            style={[createTicketStyles.button, createTicketStyles.cancel]} 
+          <TouchableOpacity
+            style={[createTicketStyles.button, createTicketStyles.cancel]}
             onPress={() => router.back()}
             disabled={loading}
           >
             <Text style={createTicketStyles.cancelText}>Cancelar</Text>
           </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                createTicketStyles.button, 
-                createTicketStyles.primary,
-                (loading || !cedula || !nombre) && createTicketStyles.disabledButton
-              ]}
-              onPress={onSubmit}
-              disabled={loading || !cedula || !nombre}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <>
-                  <Text style={createTicketStyles.primaryText}>Crear Ticket</Text>
-                  <Ionicons name="save-outline" size={18} color="#fff" />
-                </>
-              )}
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              createTicketStyles.button,
+              createTicketStyles.primary,
+              (loading || !cedula || !nombre) && createTicketStyles.disabledButton
+            ]}
+            onPress={onSubmit}
+            disabled={loading || !cedula || !nombre}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Text style={createTicketStyles.primaryText}>Crear Ticket</Text>
+                <Ionicons name="save-outline" size={18} color="#fff" />
+              </>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>

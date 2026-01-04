@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Modal, Alert, ActivityIndicator, ScrollView } from 'react-native';
-import { apiFetch } from '../services/api'; 
+import { apiFetch } from '../services/api';
 import assignmentsStyles from './styles/assignments.styles';
+import BackButton from '../../components/BackButton';
+
 
 export default function AssignmentsScreen() {
   const [tickets, setTickets] = useState<any[]>([]);
@@ -28,6 +30,35 @@ export default function AssignmentsScreen() {
     }
   };
 
+  const handleDelete = (ticketId: string) => {
+    Alert.alert(
+      "Confirmar Eliminación",
+      "¿Estás seguro de que deseas eliminar este ticket permanentemente? Esta acción no se puede deshacer.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Eliminar",
+          style: "destructive", // En iOS esto lo pone rojo automáticamente
+          onPress: async () => {
+            try {
+              // Llamamos al endpoint DELETE /tickets/{id} del TicketController
+              await apiFetch(`/tickets/${ticketId}`, 'DELETE');
+
+              Alert.alert("Éxito", "Ticket eliminado correctamente");
+
+              // IMPORTANTE: Recarga la lista para que desaparezca
+              // Si tu función de carga se llama diferente (ej: loadData), cambia esto:
+              setTickets(tickets.filter(t => t.id !== ticketId));
+            } catch (error: any) {
+              const msg = error.response?.data?.message || "No se pudo eliminar";
+              Alert.alert("Error", msg);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const openAssignModal = (ticket: any) => {
     setSelectedTicket(ticket);
     setModalVisible(true);
@@ -39,7 +70,7 @@ export default function AssignmentsScreen() {
     try {
       await apiFetch(`/tickets/${selectedTicket.id}`, 'PUT', {
         tecnico_id: technicianId,
-        estado_usuario: 'en_revision', 
+        estado_usuario: 'en_revision',
         estado_interno: 'en_proceso'
       });
 
@@ -87,10 +118,10 @@ export default function AssignmentsScreen() {
           </Text>
         </View>
       </View>
-      
+
       <Text style={assignmentsStyles.deviceText}>{item.tipo_dispositivo} - {item.marca} {item.modelo}</Text>
       <Text style={assignmentsStyles.clientText}>Cliente: {item.cliente?.nombre || 'N/A'}</Text>
-      
+
       <View style={assignmentsStyles.assignRow}>
         <View style={assignmentsStyles.techInfo}>
           <Text style={assignmentsStyles.techLabel}>Técnico actual:</Text>
@@ -102,19 +133,27 @@ export default function AssignmentsScreen() {
         </View>
       </View>
 
-      <TouchableOpacity 
-        style={assignmentsStyles.assignButton} 
+      <TouchableOpacity
+        style={assignmentsStyles.assignButton}
         onPress={() => openAssignModal(item)}
         activeOpacity={0.7}
       >
         <Text style={assignmentsStyles.assignButtonIcon}>🔄</Text>
         <Text style={assignmentsStyles.assignButtonText}>Reasignar Técnico</Text>
       </TouchableOpacity>
+      {/* Botón de Eliminar */}
+      <TouchableOpacity
+        style={assignmentsStyles.deleteButton}
+        onPress={() => handleDelete(item.id)}
+      >
+        <Text style={assignmentsStyles.deleteButtonText}>Eliminar</Text>
+      </TouchableOpacity>
     </View>
   );
 
   return (
     <View style={assignmentsStyles.container}>
+       <BackButton />
       <View style={assignmentsStyles.header}>
         <Text style={assignmentsStyles.title}>Reasignación de Casos</Text>
         <Text style={assignmentsStyles.subtitle}>Mover tickets entre técnicos</Text>
@@ -156,14 +195,14 @@ export default function AssignmentsScreen() {
               </Text>
             </View>
 
-            <ScrollView 
+            <ScrollView
               style={assignmentsStyles.techList}
               showsVerticalScrollIndicator={false}
             >
               {technicians.map((item) => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   key={item.id}
-                  style={assignmentsStyles.techOption} 
+                  style={assignmentsStyles.techOption}
                   onPress={() => handleAssign(item.id)}
                   activeOpacity={0.7}
                 >
@@ -181,8 +220,8 @@ export default function AssignmentsScreen() {
               ))}
             </ScrollView>
 
-            <TouchableOpacity 
-              style={assignmentsStyles.cancelButton} 
+            <TouchableOpacity
+              style={assignmentsStyles.cancelButton}
               onPress={() => setModalVisible(false)}
               activeOpacity={0.7}
             >

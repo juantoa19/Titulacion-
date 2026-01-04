@@ -33,14 +33,14 @@ export default StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '800',
     color: colors.white,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.lightBlue,
     textAlign: 'center',
     opacity: 0.9,
@@ -376,5 +376,30 @@ export default StyleSheet.create({
     fontWeight: '600',
     color: colors.white,
     letterSpacing: 0.3,
+  },
+
+  revisionContainer: {
+    backgroundColor: '#fffbeb', // Fondo crema/ámbar muy claro
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#fcd34d', // Borde amarillo/naranja suave
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b', // Borde izquierdo naranja fuerte
+  },
+  revisionLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#b45309', // Texto naranja oscuro
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  revisionText: {
+    fontSize: 15,
+    color: '#334155', // Gris oscuro para lectura fácil
+    lineHeight: 22,
+    fontStyle: 'italic',
   },
 });

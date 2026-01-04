@@ -20,11 +20,14 @@ import { Ionicons } from '@expo/vector-icons';
 import registerStyles from './styles/register.styles';
 import { useAuth, RegisterData } from '../context/_AuthContext';
 import { router } from 'expo-router';
+import BackButton from '../../components/BackButton';
 
 
 const { width } = Dimensions.get('window');
 
 export default function RegisterScreen() {
+  const onlyLetters = (text: string): string =>
+    text.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -266,7 +269,7 @@ export default function RegisterScreen() {
           ]}
         />
       </View>
-
+      <BackButton />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
           style={registerStyles.scrollView}
@@ -276,15 +279,10 @@ export default function RegisterScreen() {
           <View style={registerStyles.inner}>
             {/* Header */}
             <View style={registerStyles.header}>
-              {/* Logo animado giratorio */}
-              <Animated.View
-                style={[
-                  registerStyles.logoContainer,
-                  { transform: [{ rotate: logoRotation }] }
-                ]}
-              >
+              {/* Logo*/}
+              <Animated.View style={registerStyles.logoContainer}>
                 <View style={registerStyles.logoInner}>
-                  <Ionicons name="person-add" size={32} color="#ffffff" style={{ transform: [{ rotate: '-45deg' }] }} />
+                  <Ionicons name="person-add" size={32} color="#ffffff" />
                 </View>
               </Animated.View>
 
@@ -371,16 +369,15 @@ export default function RegisterScreen() {
                       isFocused.nombre1 && registerStyles.inputFocused,
                       nombre1 && registerStyles.inputValid
                     ]}
-                    placeholder=""
-                    placeholderTextColor="#94a3b8"
                     value={nombre1}
-                    onChangeText={setNombre1}
+                    onChangeText={(text) => setNombre1(onlyLetters(text))}
                     onFocus={() => handleFocus('nombre1')}
                     onBlur={() => handleBlur('nombre1')}
                     maxLength={50}
                     editable={!loading}
                   />
                 </View>
+
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
                     Segundo Nombre
@@ -394,10 +391,8 @@ export default function RegisterScreen() {
                       isFocused.nombre2 && registerStyles.inputFocused,
                       nombre2 && registerStyles.inputValid
                     ]}
-                    placeholder=""
-                    placeholderTextColor="#94a3b8"
                     value={nombre2}
-                    onChangeText={setNombre2}
+                    onChangeText={(text) => setNombre2(onlyLetters(text))}
                     onFocus={() => handleFocus('nombre2')}
                     onBlur={() => handleBlur('nombre2')}
                     maxLength={50}
@@ -422,16 +417,15 @@ export default function RegisterScreen() {
                       isFocused.apellido1 && registerStyles.inputFocused,
                       apellido1 && registerStyles.inputValid
                     ]}
-                    placeholder=""
-                    placeholderTextColor="#94a3b8"
                     value={apellido1}
-                    onChangeText={setApellido1}
+                    onChangeText={(text) => setApellido1(onlyLetters(text))}
                     onFocus={() => handleFocus('apellido1')}
                     onBlur={() => handleBlur('apellido1')}
                     maxLength={50}
                     editable={!loading}
                   />
                 </View>
+
                 <View style={registerStyles.halfInput}>
                   <Text style={registerStyles.inputLabel}>
                     Segundo Apellido
@@ -445,10 +439,8 @@ export default function RegisterScreen() {
                       isFocused.apellido2 && registerStyles.inputFocused,
                       apellido2 && registerStyles.inputValid
                     ]}
-                    placeholder=""
-                    placeholderTextColor="#94a3b8"
                     value={apellido2}
-                    onChangeText={setApellido2}
+                    onChangeText={(text) => setApellido2(onlyLetters(text))}
                     onFocus={() => handleFocus('apellido2')}
                     onBlur={() => handleBlur('apellido2')}
                     maxLength={50}

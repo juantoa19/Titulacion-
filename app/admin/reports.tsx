@@ -6,10 +6,12 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import reportsStyles from './styles/reports.styles';
+import BackButton from '../../components/BackButton';
+
 
 export default function ReportsScreen() {
-  const [startDate, setStartDate] = useState('2025-01-01');
-  const [endDate, setEndDate] = useState('2025-12-31');
+  const [startDate, setStartDate] = useState('2026-01-01');
+  const [endDate, setEndDate] = useState('2026-12-31');
   const [selectedStatus, setSelectedStatus] = useState(''); // '' = Todos
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -87,13 +89,14 @@ export default function ReportsScreen() {
     <ScrollView contentContainerStyle={reportsStyles.container}>
       {/* Header */}
       <View style={reportsStyles.header}>
+        <BackButton />
         <Text style={reportsStyles.title}>Reportes de Tickets</Text>
         <Text style={reportsStyles.subtitle}>Genera reportes y estadísticas detalladas</Text>
       </View>
 
       {/* Filtros */}
       <View style={reportsStyles.filterBox}>
-        <Text style={reportsStyles.sectionTitle}>Filtros de Búsqueda</Text>
+        <Text style={reportsStyles.sectionTitle}>Filtros de Búsqueda (Año/Mes/Día)</Text>
         
         <View style={reportsStyles.dateContainer}>
           <View style={reportsStyles.dateInputContainer}>
@@ -114,6 +117,9 @@ export default function ReportsScreen() {
             <Text style={reportsStyles.dateSeparatorText}>a</Text>
           </View>
           
+          
+        </View>
+        <View>
           <View style={reportsStyles.dateInputContainer}>
             <Text style={reportsStyles.label}>Fecha Fin</Text>
             <View style={reportsStyles.inputWrapper}>
