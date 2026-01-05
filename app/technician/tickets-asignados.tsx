@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { useAuth } from '../context/_AuthContext';
-import { apiFetch } from '../services/api'; 
+import { apiFetch } from '../services/api';
 import { useFocusEffect, router } from 'expo-router';
 import ticketsAsignadosStyles from './styles/tickets-asignados.styles';
 import BackButton from '../../components/BackButton';
@@ -47,15 +47,16 @@ interface Ticket {
   estado: TicketStatus;
   prioridad?: Priority;
   tecnicoAsignado?: string;
+  observacionRevision?: string;
 }
 
 const mapApiToTicket = (apiTicket: any): Ticket => {
-  const cliente = apiTicket.cliente || {}; 
+  const cliente = apiTicket.cliente || {};
   const tecnico = apiTicket.tecnico || {};
-  
+
   const nombreCompleto = (cliente.nombre || 'Cliente Desconocido').split(' ');
   const nombre1 = nombreCompleto[0] || '';
-  const apellido1 = nombreCompleto.slice(1).join(' '); 
+  const apellido1 = nombreCompleto.slice(1).join(' ');
 
   return {
     id: apiTicket.id.toString(),
@@ -79,6 +80,7 @@ const mapApiToTicket = (apiTicket: any): Ticket => {
     estado: apiTicket.estado_usuario,
     prioridad: apiTicket.prioridad,
     tecnicoAsignado: tecnico.name || 'Sin asignar',
+    observacionRevision: apiTicket.observacion_revision,
   };
 };
 
@@ -87,7 +89,7 @@ export default function TicketsAsignados() {
   const [myTickets, setMyTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [newStatus, setNewStatus] = useState<TicketStatus | null>(null);
   const [newPriority, setNewPriority] = useState<Priority | null>(null);
@@ -117,10 +119,10 @@ export default function TicketsAsignados() {
       setRefreshing(false);
     }
   };
-  
+
   const onRefresh = () => {
-      setRefreshing(true);
-      fetchMyTickets();
+    setRefreshing(true);
+    fetchMyTickets();
   };
 
   const handleCloseModal = () => {
@@ -187,11 +189,11 @@ export default function TicketsAsignados() {
       await apiFetch(`/tickets/${selectedTicket.id}`, 'PATCH', payload);
       Alert.alert('Éxito', `Ticket ${selectedTicket.ticketId} actualizado`);
       handleCloseModal();
-      fetchMyTickets(); 
+      fetchMyTickets();
     } catch (error: any) {
       const msg = error.response?.data?.message || 'No se pudo actualizar el ticket';
       const errors = error.response?.data?.errors;
-      
+
       if (errors) {
         const firstErrorKey = Object.keys(errors)[0];
         Alert.alert('Error de Validación', errors[firstErrorKey][0]);
@@ -210,9 +212,9 @@ export default function TicketsAsignados() {
       default: return '#6b7280';
     }
   };
-  
+
   const getPriorityColor = (priority?: Priority) => {
-     switch (priority) {
+    switch (priority) {
       case 'alta': return '#ef4444';
       case 'media': return '#f59e0b';
       case 'baja': return '#10b981';
@@ -227,15 +229,14 @@ export default function TicketsAsignados() {
   };
 
   const TicketCard = ({ ticket }: { ticket: Ticket }) => (
-    <TouchableOpacity 
-      style={ticketsAsignadosStyles.card} 
+    <TouchableOpacity
+      style={ticketsAsignadosStyles.card}
       onPress={() => {
         setSelectedTicket(ticket);
         setNewStatus(ticket.estado);
-        setNewPriority(ticket.prioridad || null); 
+        setNewPriority(ticket.prioridad || null);
         setObservaciones('');
-        setObservacionRevision('');
-        setCostoTotal('');
+        setObservacionRevision(ticket.observacionRevision || ''); setCostoTotal('');
         setAbono('');
       }}
     >
@@ -277,7 +278,7 @@ export default function TicketsAsignados() {
       <View style={ticketsAsignadosStyles.header}>
         <Text style={ticketsAsignadosStyles.title}>Mis Tickets Asignados</Text>
         <Text style={ticketsAsignadosStyles.subtitle}>Tickets en los que estás trabajando</Text>
-        
+
         {/* Estadísticas rápidas */}
         <View style={ticketsAsignadosStyles.statsContainer}>
           <View style={ticketsAsignadosStyles.statItem}>
@@ -318,8 +319,8 @@ export default function TicketsAsignados() {
             </View>
           }
           refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
+            <RefreshControl
+              refreshing={refreshing}
               onRefresh={onRefresh}
               tintColor="#5faee3"
               colors={['#5faee3', '#10518b']}
@@ -332,7 +333,7 @@ export default function TicketsAsignados() {
         <Modal transparent animationType="fade" visible={!!selectedTicket} onRequestClose={handleCloseModal}>
           <View style={ticketsAsignadosStyles.modalOverlay}>
             <View style={ticketsAsignadosStyles.modalContent}>
-              <ScrollView 
+              <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={ticketsAsignadosStyles.scrollContent}
               >
@@ -344,16 +345,16 @@ export default function TicketsAsignados() {
                   <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.userInfo?.nombre1} {selectedTicket.userInfo?.apellido1}</Text>
                 </View>
                 <View style={ticketsAsignadosStyles.detailRow}>
-                   <Text style={ticketsAsignadosStyles.detailLabel}>Cédula:</Text>
-                   <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.userInfo?.cedula}</Text>
+                  <Text style={ticketsAsignadosStyles.detailLabel}>Cédula:</Text>
+                  <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.userInfo?.cedula}</Text>
                 </View>
                 <View style={ticketsAsignadosStyles.detailRow}>
                   <Text style={ticketsAsignadosStyles.detailLabel}>Teléfono:</Text>
                   <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.userInfo?.telefono}</Text>
                 </View>
                 <View style={ticketsAsignadosStyles.detailRow}>
-                   <Text style={ticketsAsignadosStyles.detailLabel}>Dirección:</Text>
-                   <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.userInfo?.direccion}</Text>
+                  <Text style={ticketsAsignadosStyles.detailLabel}>Dirección:</Text>
+                  <Text style={ticketsAsignadosStyles.detailValue}>{selectedTicket.userInfo?.direccion}</Text>
                 </View>
 
                 <Text style={ticketsAsignadosStyles.sectionTitle}>Información del Dispositivo</Text>
@@ -391,7 +392,7 @@ export default function TicketsAsignados() {
                       onPress={() => setNewStatus(status)}
                     >
                       <Text style={[
-                        ticketsAsignadosStyles.stateButtonText, 
+                        ticketsAsignadosStyles.stateButtonText,
                         (newStatus || selectedTicket.estado) === status && ticketsAsignadosStyles.stateButtonTextActive
                       ]}>
                         {status.replace('_', ' ')}
@@ -404,7 +405,7 @@ export default function TicketsAsignados() {
                     <Text style={ticketsAsignadosStyles.revisionHelperText}>
                       Ingrese los detalles del diagnóstico:
                     </Text>
-                    
+
                     <Text style={ticketsAsignadosStyles.inputLabel}>Observación de Revisión *</Text>
                     <TextInput
                       style={[ticketsAsignadosStyles.input, ticketsAsignadosStyles.textArea]}
@@ -420,7 +421,7 @@ export default function TicketsAsignados() {
                 {isClosing && (
                   <View style={ticketsAsignadosStyles.closingFieldsContainer}>
                     <Text style={ticketsAsignadosStyles.helperText}>Complete los datos para cerrar el ticket:</Text>
-                    
+
                     <Text style={ticketsAsignadosStyles.inputLabel}>Observaciones del Técnico *</Text>
                     <TextInput
                       style={[ticketsAsignadosStyles.input, ticketsAsignadosStyles.textArea]}
@@ -460,7 +461,7 @@ export default function TicketsAsignados() {
                     <View style={ticketsAsignadosStyles.saldoContainer}>
                       <Text style={ticketsAsignadosStyles.saldoLabel}>Saldo Pendiente:</Text>
                       <Text style={[
-                        ticketsAsignadosStyles.saldoValue, 
+                        ticketsAsignadosStyles.saldoValue,
                         parseFloat(saldoPendiente) > 0 ? { color: '#ef4444' } : { color: '#10b981' }
                       ]}>
                         ${saldoPendiente}
@@ -481,7 +482,7 @@ export default function TicketsAsignados() {
                       onPress={() => setNewPriority(priority)}
                     >
                       <Text style={[
-                        ticketsAsignadosStyles.priorityButtonText, 
+                        ticketsAsignadosStyles.priorityButtonText,
                         (newPriority || selectedTicket.prioridad) === priority && ticketsAsignadosStyles.priorityButtonTextActive
                       ]}>
                         {priority}
@@ -494,14 +495,14 @@ export default function TicketsAsignados() {
               </ScrollView>
 
               <View style={ticketsAsignadosStyles.modalActions}>
-                <TouchableOpacity 
-                  style={[ticketsAsignadosStyles.modalButton, ticketsAsignadosStyles.cancelButton]} 
+                <TouchableOpacity
+                  style={[ticketsAsignadosStyles.modalButton, ticketsAsignadosStyles.cancelButton]}
                   onPress={handleCloseModal}
                 >
                   <Text style={ticketsAsignadosStyles.cancelButtonText}>Cancelar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[ticketsAsignadosStyles.modalButton, ticketsAsignadosStyles.saveButton]} 
+                <TouchableOpacity
+                  style={[ticketsAsignadosStyles.modalButton, ticketsAsignadosStyles.saveButton]}
                   onPress={handleSaveChanges}
                 >
                   <Text style={ticketsAsignadosStyles.saveButtonText}>Guardar Cambios</Text>

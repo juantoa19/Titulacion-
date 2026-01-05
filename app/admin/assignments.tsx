@@ -71,7 +71,8 @@ export default function AssignmentsScreen() {
       await apiFetch(`/tickets/${selectedTicket.id}`, 'PUT', {
         tecnico_id: technicianId,
         estado_usuario: 'en_revision',
-        estado_interno: 'en_proceso'
+        estado_interno: 'en_proceso',
+        observacion_revision: 'Reasignación administrativa de técnico.'
       });
 
       Alert.alert('Éxito', 'Ticket reasignado correctamente');
